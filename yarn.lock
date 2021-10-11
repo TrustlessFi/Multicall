@@ -404,6 +404,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@trustlessfi/multicall@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@trustlessfi/multicall@workspace:."
+  dependencies:
+    "@trustlessfi/utils": ^0.1.2
+    ethers: ^5.4.7
+    typescript: ^4.4.3
+  languageName: unknown
+  linkType: soft
+
 "@trustlessfi/utils@npm:^0.1.2":
   version: 0.1.2
   resolution: "@trustlessfi/utils@npm:0.1.2"
@@ -412,16 +422,6 @@ __metadata:
   checksum: ceab5e0e66977ff221ca2e2645942276ebb7c3e327f4c41d94a4a93bee78ca96e33b9a3dbd819fa5c43474d231d72fa0cce9ff51cd7b073ad4e9c3fa3e08d10e
   languageName: node
   linkType: hard
-
-"Multicall@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "Multicall@workspace:."
-  dependencies:
-    "@trustlessfi/utils": ^0.1.2
-    ethers: ^5.4.7
-    typescript: ^4.4.3
-  languageName: unknown
-  linkType: soft
 
 "aes-js@npm:3.0.0":
   version: 3.0.0
