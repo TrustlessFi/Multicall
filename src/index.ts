@@ -16,14 +16,14 @@ export const rc  = {
   BigNumberToNumber: (result: any) => (result as ethers.BigNumber).toNumber(),
   BigNumberToString: (result: any) => (result as ethers.BigNumber).toString(),
   BigNumberUnscale: (result: any) => unscale(result as ethers.BigNumber),
-  // jPositionData: (result: any) => result as PromiseType<ReturnType<Accounting['getPosition']>>,
 }
 
-export const rcDecimals = (decimals: number) => (result: any) => unscale(result as ethers.BigNumber, decimals)
+export const rcDecimals = (decimals: number) => (result: unknown) => unscale(result as ethers.BigNumber, decimals)
 
-type resultConverter = (typeof rc)[keyof typeof rc]
+type resultConverter<customConverters extends (result: unknown) => unknown> = (typeof rc)[keyof typeof rc] | customConverters
 
-interface Call<CallType extends resultConverter> {
+// TODO convert any to unknown in custom converter
+interface Call<customConverters extends (result: any) => any, CallType extends resultConverter<customConverters>> {
   id: string
   contract: Contract
   func: string
@@ -34,7 +34,7 @@ interface Call<CallType extends resultConverter> {
   encoding: string
 }
 
-export const getMulticall = <Functions extends {[key in string]: resultConverter}> (
+export const getMulticall = <customConverters extends (result: any) => any, Functions extends {[key in string]: resultConverter<customConverters>}> (
   contract: Contract,
   funcs: Functions,
   args?: {[key in keyof Functions]?: any[]},
@@ -54,11 +54,12 @@ export const getMulticall = <Functions extends {[key in string]: resultConverter
       outputs,
       encoding
     }]
-  })) as {[K in keyof Functions]: Call<Functions[K]>}
+  })) as {[K in keyof Functions]: Call<customConverters, Functions[K]>}
 }
 
 export const getDuplicateFuncMulticall = <
-  ConverterType extends resultConverter,
+  customConverters extends (result: any) => any,
+  ConverterType extends resultConverter<customConverters>,
   SpecificCalls extends {[key in string]: any[]}
 >(
   contract: Contract,
@@ -79,10 +80,12 @@ export const getDuplicateFuncMulticall = <
       outputs,
       encoding,
     }]
-  })) as {[K in keyof SpecificCalls]: Call<ConverterType>}
+  })) as {[K in keyof SpecificCalls]: Call<customConverters, ConverterType>}
 }
 
-export const executeMulticall = async <Functions extends {[key in string]: resultConverter}> (
+export const executeMulticall = async <
+  customConverters extends (result: any) => any,
+  Functions extends {[key in string]: resultConverter<customConverters>}> (
   tcpMulticall: TrustlessMulticallViewOnly,
   contract: Contract,
   funcs: Functions,
@@ -94,7 +97,9 @@ export const executeMulticall = async <Functions extends {[key in string]: resul
 }
 
 export const executeMulticalls = async <
-  Multicalls extends {[key in string]: {[key in string]: Call<resultConverter>}}
+  customConverters extends (result: any) => any,
+  ConverterType extends resultConverter<customConverters>,
+  Multicalls extends {[key in string]: {[key in string]: Call<customConverters, ConverterType>}}
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -109,7 +114,9 @@ export const executeMulticalls = async <
 }
 
 const executeMulticallsImpl = async <
-  Multicalls extends {[key in string]: {[key in string]: Call<resultConverter>}}
+  customConverters extends (result: any) => any,
+  ConverterType extends resultConverter<customConverters>,
+  Multicalls extends {[key in string]: {[key in string]: Call<customConverters, ConverterType>}}
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -122,7 +129,7 @@ const executeMulticallsImpl = async <
 
   const abiCoder = new ethersUtils.AbiCoder()
   const results = Object.fromEntries(
-    rawResults.returnData.map((rawResult: any, index: any) => {
+    rawResults.returnData.map((rawResult: any, index: number) => {
       const call = calls[index]
       const resultsArray = Object.values(abiCoder.decode(call.outputs!, rawResult))
 
@@ -172,27 +179,19 @@ const getCallMetadata = (contract: Contract, func: string, args: any[]) => {
   return {inputs, outputs, encoding}
 }
 
-
 export const getCurrentBlockDifficulty = async (multicall: TrustlessMulticall) =>
   await multicall.getCurrentBlockDifficulty()
-
 export const getCurrentBlockGasLimit = async (multicall: TrustlessMulticall) =>
   await multicall.getCurrentBlockGasLimit()
-
 export const getCurrentBlockTimestamp = async (multicall: TrustlessMulticall) =>
   await multicall.getCurrentBlockTimestamp()
-
 export const getEthBalance = async (multicall: TrustlessMulticall, address: string) =>
   await multicall.getEthBalance(address)
-
 export const getBlockNumber = async (multicall: TrustlessMulticall) =>
   await multicall.getBlockNumber()
-
 export const getBlockHash = async (multicall: TrustlessMulticall, blockNumber: BigNumberish) =>
   await multicall.getBlockHash(blockNumber)
-
 export const getLastBlockHash = async (multicall: TrustlessMulticall) =>
   await multicall.getLastBlockHash()
-
 export const getCurrentBlockCoinbase = async (multicall: TrustlessMulticall) =>
   await multicall.getCurrentBlockCoinbase()

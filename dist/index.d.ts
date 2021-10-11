@@ -12,9 +12,9 @@ export declare const rc: {
     BigNumberToString: (result: any) => string;
     BigNumberUnscale: (result: any) => number;
 };
-export declare const rcDecimals: (decimals: number) => (result: any) => number;
-declare type resultConverter = (typeof rc)[keyof typeof rc];
-interface Call<CallType extends resultConverter> {
+export declare const rcDecimals: (decimals: number) => (result: unknown) => number;
+declare type resultConverter<customConverters extends (result: unknown) => unknown> = (typeof rc)[keyof typeof rc] | customConverters;
+interface Call<customConverters extends (result: any) => any, CallType extends resultConverter<customConverters>> {
     id: string;
     contract: Contract;
     func: string;
@@ -24,18 +24,18 @@ interface Call<CallType extends resultConverter> {
     outputs?: ethersUtils.ParamType[];
     encoding: string;
 }
-export declare const getMulticall: <Functions extends {
-    [x: string]: resultConverter;
-}>(contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => { [K in keyof Functions]: Call<Functions[K]>; };
-export declare const getDuplicateFuncMulticall: <ConverterType extends resultConverter, SpecificCalls extends {
+export declare const getMulticall: <customConverters extends (result: any) => any, Functions extends {
+    [x: string]: resultConverter<customConverters>;
+}>(contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => { [K in keyof Functions]: Call<customConverters, Functions[K]>; };
+export declare const getDuplicateFuncMulticall: <customConverters extends (result: any) => any, ConverterType extends resultConverter<customConverters>, SpecificCalls extends {
     [x: string]: any[];
-}>(contract: Contract, func: string, converter: ConverterType, calls: SpecificCalls) => { [K in keyof SpecificCalls]: Call<ConverterType>; };
-export declare const executeMulticall: <Functions extends {
-    [x: string]: resultConverter;
-}>(tcpMulticall: TrustlessMulticallViewOnly, contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => Promise<{ [FunctionID in keyof { [K in keyof Functions]: Call<Functions[K]>; }]: ReturnType<{ [K in keyof Functions]: Call<Functions[K]>; }[FunctionID]["converter"]>; }>;
-export declare const executeMulticalls: <Multicalls extends {
+}>(contract: Contract, func: string, converter: ConverterType, calls: SpecificCalls) => { [K in keyof SpecificCalls]: Call<customConverters, ConverterType>; };
+export declare const executeMulticall: <customConverters extends (result: any) => any, Functions extends {
+    [x: string]: resultConverter<customConverters>;
+}>(tcpMulticall: TrustlessMulticallViewOnly, contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => Promise<{ [FunctionID in keyof { [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }]: ReturnType<{ [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }[FunctionID]["converter"]>; }>;
+export declare const executeMulticalls: <customConverters extends (result: any) => any, ConverterType extends resultConverter<customConverters>, Multicalls extends {
     [x: string]: {
-        [x: string]: Call<resultConverter>;
+        [x: string]: Call<customConverters, ConverterType>;
     };
 }>(tcpMulticall: TrustlessMulticallViewOnly, multicalls: Multicalls) => Promise<{ [Multicall in keyof Multicalls]: { [FunctionID in keyof Multicalls[Multicall]]: ReturnType<Multicalls[Multicall][FunctionID]["converter"]>; }; }>;
 export declare const getCurrentBlockDifficulty: (multicall: TrustlessMulticall) => Promise<ethers.BigNumber>;

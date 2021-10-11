@@ -1,6 +1,6 @@
 {
   "name": "@trustlessfi/multicall",
-  "version": "0.2.3",
+  "version": "0.2.7",
   "description": "Multicall for easily retrieving strongly typed view data from the ethereum blockchain.",
   "repository": "https://github.com/TrustlessFi/Multicall",
   "author": "TrustlessOfficial <TrustlessFi@protonmail.com>",
