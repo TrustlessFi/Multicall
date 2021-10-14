@@ -104,11 +104,3 @@ const getCallMetadata = (contract, func, args) => {
     const encoding = contract.interface.encodeFunctionData(func, args);
     return { inputs, outputs, encoding };
 };
-export const getCurrentBlockDifficulty = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getCurrentBlockDifficulty(); });
-export const getCurrentBlockGasLimit = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getCurrentBlockGasLimit(); });
-export const getCurrentBlockTimestamp = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getCurrentBlockTimestamp(); });
-export const getEthBalance = (multicall, address) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getEthBalance(address); });
-export const getBlockNumber = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getBlockNumber(); });
-export const getBlockHash = (multicall, blockNumber) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getBlockHash(blockNumber); });
-export const getLastBlockHash = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getLastBlockHash(); });
-export const getCurrentBlockCoinbase = (multicall) => __awaiter(void 0, void 0, void 0, function* () { return yield multicall.getCurrentBlockCoinbase(); });

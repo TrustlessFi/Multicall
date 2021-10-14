@@ -1,6 +1,5 @@
-import { Contract, utils as ethersUtils, ethers, BigNumberish } from 'ethers';
+import { Contract, utils as ethersUtils, ethers } from 'ethers';
 import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly';
-import { TrustlessMulticall } from './typechain/TrustlessMulticall';
 export declare const rc: {
     Number: (result: any) => number;
     Boolean: (result: any) => boolean;
@@ -38,12 +37,4 @@ export declare const executeMulticalls: <customConverters extends (result: any) 
         [x: string]: Call<customConverters, ConverterType>;
     };
 }>(tcpMulticall: TrustlessMulticallViewOnly, multicalls: Multicalls) => Promise<{ [Multicall in keyof Multicalls]: { [FunctionID in keyof Multicalls[Multicall]]: ReturnType<Multicalls[Multicall][FunctionID]["converter"]>; }; }>;
-export declare const getCurrentBlockDifficulty: (multicall: TrustlessMulticall) => Promise<ethers.BigNumber>;
-export declare const getCurrentBlockGasLimit: (multicall: TrustlessMulticall) => Promise<ethers.BigNumber>;
-export declare const getCurrentBlockTimestamp: (multicall: TrustlessMulticall) => Promise<ethers.BigNumber>;
-export declare const getEthBalance: (multicall: TrustlessMulticall, address: string) => Promise<ethers.BigNumber>;
-export declare const getBlockNumber: (multicall: TrustlessMulticall) => Promise<ethers.BigNumber>;
-export declare const getBlockHash: (multicall: TrustlessMulticall, blockNumber: BigNumberish) => Promise<string>;
-export declare const getLastBlockHash: (multicall: TrustlessMulticall) => Promise<string>;
-export declare const getCurrentBlockCoinbase: (multicall: TrustlessMulticall) => Promise<string>;
 export {};
