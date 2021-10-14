@@ -1,10 +1,9 @@
 // Copyright (c) 2020. All Rights Reserved
 // SPDX-License-Identifier: UNLICENSED
 
-import { Contract, utils as ethersUtils, ethers, BigNumberish } from 'ethers'
+import { Contract, utils as ethersUtils, ethers } from 'ethers'
 import { enforce, first, unscale } from '@trustlessfi/utils'
 import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
-import { TrustlessMulticall } from './typechain/TrustlessMulticall'
 
 export const rc  = {
   Number: (result: any) => result as number,
