@@ -33,7 +33,10 @@ interface Call<customConverters extends (result: any) => any, CallType extends r
   encoding: string
 }
 
-export const getMulticall = <customConverters extends (result: any) => any, Functions extends {[key in string]: resultConverter<customConverters>}> (
+export const getMulticall = <
+  customConverters extends (result: any) => any,
+  Functions extends {[key in string]: resultConverter<customConverters>},
+> (
   contract: Contract,
   funcs: Functions,
   args?: {[key in keyof Functions]?: any[]},
@@ -59,12 +62,12 @@ export const getMulticall = <customConverters extends (result: any) => any, Func
 export const getDuplicateFuncMulticall = <
   customConverters extends (result: any) => any,
   ConverterType extends resultConverter<customConverters>,
-  SpecificCalls extends {[key in string]: any[]}
+  SpecificCallArgs extends {[key in string]: any[]}
 >(
   contract: Contract,
   func: string,
   converter: ConverterType,
-  calls: SpecificCalls,
+  calls: SpecificCallArgs,
 ) => {
   return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
     const {inputs, outputs, encoding } = getCallMetadata(contract, func, args)
@@ -79,7 +82,7 @@ export const getDuplicateFuncMulticall = <
       outputs,
       encoding,
     }]
-  })) as {[K in keyof SpecificCalls]: Call<customConverters, ConverterType>}
+  })) as {[K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>}
 }
 
 export const executeMulticall = async <

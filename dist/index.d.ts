@@ -26,9 +26,9 @@ interface Call<customConverters extends (result: any) => any, CallType extends r
 export declare const getMulticall: <customConverters extends (result: any) => any, Functions extends {
     [x: string]: resultConverter<customConverters>;
 }>(contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => { [K in keyof Functions]: Call<customConverters, Functions[K]>; };
-export declare const getDuplicateFuncMulticall: <customConverters extends (result: any) => any, ConverterType extends resultConverter<customConverters>, SpecificCalls extends {
+export declare const getDuplicateFuncMulticall: <customConverters extends (result: any) => any, ConverterType extends resultConverter<customConverters>, SpecificCallArgs extends {
     [x: string]: any[];
-}>(contract: Contract, func: string, converter: ConverterType, calls: SpecificCalls) => { [K in keyof SpecificCalls]: Call<customConverters, ConverterType>; };
+}>(contract: Contract, func: string, converter: ConverterType, calls: SpecificCallArgs) => { [K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>; };
 export declare const executeMulticall: <customConverters extends (result: any) => any, Functions extends {
     [x: string]: resultConverter<customConverters>;
 }>(tcpMulticall: TrustlessMulticallViewOnly, contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => Promise<{ [FunctionID in keyof { [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }]: ReturnType<{ [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }[FunctionID]["converter"]>; }>;
