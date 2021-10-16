@@ -85,6 +85,44 @@ export const getDuplicateFuncMulticall = <
   })) as {[K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>}
 }
 
+export const contractFunctionSelector = (address: string, func: string) => address + ':' + func
+
+export const selectorToContractFunction = (selector: string) => {
+  const parts = selector.split(':')
+  enforce(parts.length === 2, 'invalid contract function selector')
+  return { address: parts[0], func: parts[1] }
+}
+
+export const getDuplicateContractMulticall = <
+  customConverters extends (result: any) => any,
+  Functions extends {[key in string]: resultConverter<customConverters>},
+> (
+  contractObject: Contract,
+  contractFunctionSelectors: Functions,
+  args?: {[key in keyof Functions]?: any[]},
+) => {
+  return Object.fromEntries(Object.entries(contractFunctionSelectors).map(([selector, converter]) => {
+    const id = selector
+    const { address, func } = selectorToContractFunction(selector)
+    const contract = contractObject.attach(address)
+    const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
+    const args1 = args0 === undefined ? [] : args0
+
+    const {inputs, outputs, encoding } = getCallMetadata(contract, func, args1)
+
+    return [id, {
+      id,
+      contract,
+      func,
+      args: args1,
+      converter,
+      inputs,
+      outputs,
+      encoding,
+    }]
+  })) as {[K in keyof Functions]: Call<customConverters, Functions[K]>}
+}
+
 export const executeMulticall = async <
   customConverters extends (result: any) => any,
   Functions extends {[key in string]: resultConverter<customConverters>}> (

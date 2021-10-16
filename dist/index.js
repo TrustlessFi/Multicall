@@ -55,6 +55,32 @@ export const getDuplicateFuncMulticall = (contract, func, converter, calls) => {
             }];
     }));
 };
+export const contractFunctionSelector = (address, func) => address + ':' + func;
+export const selectorToContractFunction = (selector) => {
+    const parts = selector.split(':');
+    enforce(parts.length === 2, 'invalid contract function selector');
+    return { address: parts[0], func: parts[1] };
+};
+export const getDuplicateContractMulticall = (contractObject, contractFunctionSelectors, args) => {
+    return Object.fromEntries(Object.entries(contractFunctionSelectors).map(([selector, converter]) => {
+        const id = selector;
+        const { address, func } = selectorToContractFunction(selector);
+        const contract = contractObject.attach(address);
+        const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
+        const args1 = args0 === undefined ? [] : args0;
+        const { inputs, outputs, encoding } = getCallMetadata(contract, func, args1);
+        return [id, {
+                id,
+                contract,
+                func,
+                args: args1,
+                converter,
+                inputs,
+                outputs,
+                encoding,
+            }];
+    }));
+};
 export const executeMulticall = (tcpMulticall, contract, funcs, args) => __awaiter(void 0, void 0, void 0, function* () {
     const multicall = getMulticall(contract, funcs, args);
     return (yield executeMulticalls(tcpMulticall, { aMulticall: multicall })).aMulticall;
