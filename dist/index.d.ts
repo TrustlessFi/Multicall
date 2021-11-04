@@ -37,6 +37,15 @@ export declare const selectorToContractFunction: (selector: string) => {
 export declare const getDuplicateContractMulticall: <customConverters extends (result: any) => any, Functions extends {
     [x: string]: resultConverter<customConverters>;
 }>(contractObject: Contract, contractFunctionSelectors: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => { [K in keyof Functions]: Call<customConverters, Functions[K]>; };
+export declare const getFullSelector: (contract: Contract, address: string, func: string, args: any[]) => string;
+export declare const decodeFullSelector: (selector: string, contract: Contract) => {
+    contract: Contract;
+    func: string;
+    args: any[];
+};
+export declare const getCustomMulticall: <customConverters extends (result: any) => any, Functions extends {
+    [x: string]: resultConverter<customConverters>;
+}>(contractObject: Contract, selectors: Functions) => { [K in keyof Functions]: Call<customConverters, Functions[K]>; };
 export declare const executeMulticall: <customConverters extends (result: any) => any, Functions extends {
     [x: string]: resultConverter<customConverters>;
 }>(tcpMulticall: TrustlessMulticallViewOnly, contract: Contract, funcs: Functions, args?: { [key in keyof Functions]?: any[] | undefined; } | undefined) => Promise<{ [FunctionID in keyof { [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }]: ReturnType<{ [K in keyof Functions]: Call<(result: any) => any, Functions[K]>; }[FunctionID]["converter"]>; }>;

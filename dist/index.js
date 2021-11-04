@@ -61,12 +61,13 @@ export const selectorToContractFunction = (selector) => {
     enforce(parts.length === 2, 'invalid contract function selector');
     return { address: parts[0], func: parts[1] };
 };
+// TODO deprecate in favor of duplicate contracts and args below
 export const getDuplicateContractMulticall = (contractObject, contractFunctionSelectors, args) => {
     return Object.fromEntries(Object.entries(contractFunctionSelectors).map(([selector, converter]) => {
         const id = selector;
         const { address, func } = selectorToContractFunction(selector);
         const contract = contractObject.attach(address);
-        const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
+        const args0 = args === undefined ? [] : args.hasOwnProperty(selector) ? args[selector] : [];
         const args1 = args0 === undefined ? [] : args0;
         const { inputs, outputs, encoding } = getCallMetadata(contract, func, args1);
         return [id, {
@@ -74,6 +75,44 @@ export const getDuplicateContractMulticall = (contractObject, contractFunctionSe
                 contract,
                 func,
                 args: args1,
+                converter,
+                inputs,
+                outputs,
+                encoding,
+            }];
+    }));
+};
+export const getFullSelector = (contract, address, func, args) => {
+    const abiCoder = new ethersUtils.AbiCoder();
+    const fragment = getFunctionFragment(contract, func);
+    const inputs = fragment.inputs;
+    enforce(inputs.length === args.length, 'getFullSelector: inputs dont match args.');
+    const encodedArgs = abiCoder.encode(inputs, args);
+    return [address, func, encodedArgs].join(':');
+};
+const getDecodedArgs = (inputs, decodedResult) => inputs.map(input => decodedResult[input.name]);
+export const decodeFullSelector = (selector, contract) => {
+    const parts = selector.split(':');
+    enforce(parts.length === 3, 'decodeFullSelector: invalid contract function args selector');
+    const address = parts[0];
+    const func = parts[1];
+    const encodedArgs = parts[2];
+    const fragment = getFunctionFragment(contract, func);
+    const inputs = fragment.inputs;
+    const decodedResult = (new ethersUtils.AbiCoder()).decode(inputs, encodedArgs);
+    const args = getDecodedArgs(inputs, decodedResult);
+    contract = contract.attach(address);
+    return { contract, func, args };
+};
+export const getCustomMulticall = (contractObject, selectors) => {
+    return Object.fromEntries(Object.entries(selectors).map(([id, converter]) => {
+        const { contract, func, args } = decodeFullSelector(id, contractObject);
+        const { inputs, outputs, encoding } = getCallMetadata(contract, func, args);
+        return [id, {
+                id,
+                contract,
+                func,
+                args,
                 converter,
                 inputs,
                 outputs,
@@ -116,17 +155,20 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
         ]))
     ]));
 });
-const getCallMetadata = (contract, func, args) => {
+const getFunctionFragment = (contract, func) => {
     const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func);
     enforce(matchingFunctions.length >= 1, 'No matching functions found for ' + func);
     enforce(matchingFunctions.length <= 1, 'Multiple matching functions found for ' + func);
-    const fragment = first(matchingFunctions);
+    return first(matchingFunctions);
+};
+const getCallMetadata = (contract, func, args) => {
+    const fragment = getFunctionFragment(contract, func);
     const stateMutability = fragment.stateMutability;
     const inputs = fragment.inputs;
     const outputs = fragment.outputs;
     enforce(!fragment.payable, 'function ' + func + ' is payable');
     enforce(stateMutability === 'view' || stateMutability === 'pure', 'function ' + func + ' mutates state');
-    enforce(inputs.length === args.length, 'Incorrect args sent to function ' + func + ': ' + inputs.length + 'required, ' + args.length + 'given');
+    enforce(inputs.length === args.length, 'Incorrect args sent to function ' + func + ': ' + inputs.length + ' required, ' + args.length + ' given.');
     const encoding = contract.interface.encodeFunctionData(func, args);
     return { inputs, outputs, encoding };
 };
