@@ -220,9 +220,12 @@ const executeMulticallsImpl = async <
 ) => {
   const calls = Object.values(multicalls).map(multicall => Object.values(multicall)).flat()
 
-  const rawResults = await tcpMulticall.all(calls.map(
-    call => ({ target: call.contract.address, callData: call.encoding })
-  ))
+  const rawResults =
+    calls.length === 0
+    ? {blockNumber: 0, returnData: []}
+    : await tcpMulticall.all(calls.map(
+        call => ({ target: call.contract.address, callData: call.encoding })
+      ))
 
   const abiCoder = new ethersUtils.AbiCoder()
   const results = Object.fromEntries(

@@ -136,7 +136,9 @@ export const executeMulticalls = (tcpMulticall, multicalls) => __awaiter(void 0,
 });
 const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
     const calls = Object.values(multicalls).map(multicall => Object.values(multicall)).flat();
-    const rawResults = yield tcpMulticall.all(calls.map(call => ({ target: call.contract.address, callData: call.encoding })));
+    const rawResults = calls.length === 0
+        ? { blockNumber: 0, returnData: [] }
+        : yield tcpMulticall.all(calls.map(call => ({ target: call.contract.address, callData: call.encoding })));
     const abiCoder = new ethersUtils.AbiCoder();
     const results = Object.fromEntries(rawResults.returnData.map((rawResult, index) => {
         const call = calls[index];
