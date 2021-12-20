@@ -409,18 +409,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@trustlessfi/multicall@workspace:."
   dependencies:
-    "@trustlessfi/utils": ^0.2.1
+    "@trustlessfi/utils": ^0.2.9
     ethers: ^5.4.7
     typescript: ^4.4.3
   languageName: unknown
   linkType: soft
 
-"@trustlessfi/utils@npm:^0.2.1":
-  version: 0.2.8
-  resolution: "@trustlessfi/utils@npm:0.2.8"
+"@trustlessfi/utils@npm:^0.2.9":
+  version: 0.2.9
+  resolution: "@trustlessfi/utils@npm:0.2.9"
   dependencies:
     ethers: ^5.4.7
-  checksum: fac5ee784ebb3f81e565c821da2da278a18947f49fa6bb6d37e07cf0d6e85891317913bf63f33dbb6cecb68b1cb7d5bbbdbfd3c406e289683b738316147b9fdc
+  checksum: 1e1fd6408b28c41d9d29f826e2418307f6d08a47380a77a1bc61554893115fb427e7759c47d5921dbcfccab9ed2c646a59c0028ff85ea5052230d1e4f9f2e44c
   languageName: node
   linkType: hard
 
