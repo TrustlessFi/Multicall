@@ -156,15 +156,15 @@ const executeMulticallsImpl = async <
     Object.fromEntries(
       Object.values(
         Object.fromEntries(
-          Object.entries(multicalls).map(
-            ([multicallName, innerMulticall]) =>
-              [
-                multicallName,
-                Object.fromEntries(Object.entries(innerMulticall).map(([innerName, innerCall]) =>
-                  [[multicallName, innerName, innerCall.id].join(':'), innerCall ]
-                ))
-              ]
-          )
+          Object.entries(multicalls)
+            .map(([multicallName, innerMulticall]) =>
+                [
+                  multicallName,
+                  Object.fromEntries(Object.entries(innerMulticall).map(([innerName, innerCall]) =>
+                    [[multicallName, innerName, innerCall.id].join(':'), innerCall ]
+                  ))
+                ]
+            )
         )
       ).map(obj => Object.entries(obj)).flat()
     )
