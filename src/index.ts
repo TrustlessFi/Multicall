@@ -14,7 +14,7 @@ export const rc  = {
   BigNumber: (result: any) => result as ethers.BigNumber,
   BigNumberToNumber: (result: any) => (result as ethers.BigNumber).toNumber(),
   BigNumberToString: (result: any) => (result as ethers.BigNumber).toString(),
-  BigNumberUnscale: (result: any) => unscale(result as ethers.BigNumber),
+   BigNumberUnscale: (result: any) => unscale(result),
 }
 
 export const rcDecimals = (decimals: number) => (result: unknown) => unscale(result as ethers.BigNumber, decimals)
@@ -209,8 +209,8 @@ const executeMulticallsImpl = async <
 
 const getFunctionFragment = (contract: Contract, func: string) => {
   const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func)
-  enforce(matchingFunctions.length >= 1, 'No matching functions found for ' + func)
-  enforce(matchingFunctions.length <= 1, 'Multiple matching functions found for ' + func)
+  enforce(matchingFunctions.length >= 1, 'Multicall: No matching functions found for ' + func)
+  enforce(matchingFunctions.length <= 1, 'Multicall: Multiple matching functions found for ' + func)
   return first(matchingFunctions)
 }
 

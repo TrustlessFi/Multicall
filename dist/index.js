@@ -89,7 +89,8 @@ export const executeMulticalls = (tcpMulticall, multicalls) => __awaiter(void 0,
     }
 });
 const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
-    const calls = Object.fromEntries(Object.values(Object.fromEntries(Object.entries(multicalls).map(([multicallName, innerMulticall]) => [
+    const calls = Object.fromEntries(Object.values(Object.fromEntries(Object.entries(multicalls)
+        .map(([multicallName, innerMulticall]) => [
         multicallName,
         Object.fromEntries(Object.entries(innerMulticall).map(([innerName, innerCall]) => [[multicallName, innerName, innerCall.id].join(':'), innerCall]))
     ]))).map(obj => Object.entries(obj)).flat());
@@ -116,8 +117,8 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
 });
 const getFunctionFragment = (contract, func) => {
     const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func);
-    enforce(matchingFunctions.length >= 1, 'No matching functions found for ' + func);
-    enforce(matchingFunctions.length <= 1, 'Multiple matching functions found for ' + func);
+    enforce(matchingFunctions.length >= 1, 'Multicall: No matching functions found for ' + func);
+    enforce(matchingFunctions.length <= 1, 'Multicall: Multiple matching functions found for ' + func);
     return first(matchingFunctions);
 };
 const getCallMetadata = (contract, func, args) => {
