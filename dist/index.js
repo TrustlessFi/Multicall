@@ -101,7 +101,11 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
         : Object.fromEntries((yield tcpMulticall.all(rawCalls)).results.map((rawResult, index) => {
             const call = Object.values(calls)[index];
             if (!rawResult.success) {
-                throw new Error('Multicall Failed: ' + JSON.stringify({ call }));
+                throw new Error('Multicall Failed: ' + JSON.stringify({
+                    contract: call.contract.address,
+                    func: call.func,
+                    args: call.args,
+                }));
             }
             const resultsArray = Object.values(abiCoder.decode(call.outputs, rawResult.returnData));
             // TODO as needed: support more than one result
