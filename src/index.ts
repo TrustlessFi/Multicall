@@ -3,7 +3,7 @@
 
 import { Contract, utils as ethersUtils, ethers } from 'ethers'
 import { enforce, first, unscale, zeroAddress } from '@trustlessfi/utils'
-import { TrustlessMulticallViewOnly, ResultStructOutput } from './typechain/TrustlessMulticallViewOnly'
+import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
 
 export const rc  = {
   Number: (result: any) => result as number,

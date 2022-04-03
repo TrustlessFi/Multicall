@@ -1,23 +1,25 @@
-import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, ContractTransaction, Overrides, PopulatedTransaction, Signer, utils } from "ethers";
-import { FunctionFragment, Result } from "@ethersproject/abi";
-import { Listener, Provider } from "@ethersproject/providers";
-import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare type CallStruct = {
-    target: string;
-    callData: BytesLike;
-};
-export declare type CallStructOutput = [string, string] & {
-    target: string;
-    callData: string;
-};
-export declare type ResultStruct = {
-    success: boolean;
-    returnData: BytesLike;
-};
-export declare type ResultStructOutput = [boolean, string] & {
-    success: boolean;
-    returnData: string;
-};
+import type { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, ContractTransaction, Overrides, PopulatedTransaction, Signer, utils } from "ethers";
+import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type { Listener, Provider } from "@ethersproject/providers";
+import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
+export declare namespace TrustlessMulticall {
+    type CallStruct = {
+        target: string;
+        callData: BytesLike;
+    };
+    type CallStructOutput = [string, string] & {
+        target: string;
+        callData: string;
+    };
+    type ResultStruct = {
+        success: boolean;
+        returnData: BytesLike;
+    };
+    type ResultStructOutput = [boolean, string] & {
+        success: boolean;
+        returnData: string;
+    };
+}
 export interface TrustlessMulticallInterface extends utils.Interface {
     functions: {
         "all((address,bytes)[])": FunctionFragment;
@@ -31,7 +33,8 @@ export interface TrustlessMulticallInterface extends utils.Interface {
         "getEthBalance(address)": FunctionFragment;
         "getLastBlockHash()": FunctionFragment;
     };
-    encodeFunctionData(functionFragment: "all", values: [CallStruct[]]): string;
+    getFunction(nameOrSignatureOrTopic: "all" | "getBlockHash" | "getBlockNumber" | "getChainId" | "getCurrentBlockCoinbase" | "getCurrentBlockDifficulty" | "getCurrentBlockGasLimit" | "getCurrentBlockTimestamp" | "getEthBalance" | "getLastBlockHash"): FunctionFragment;
+    encodeFunctionData(functionFragment: "all", values: [TrustlessMulticall.CallStruct[]]): string;
     encodeFunctionData(functionFragment: "getBlockHash", values: [BigNumberish]): string;
     encodeFunctionData(functionFragment: "getBlockNumber", values?: undefined): string;
     encodeFunctionData(functionFragment: "getChainId", values?: undefined): string;
@@ -68,7 +71,7 @@ export interface TrustlessMulticall extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
-        all(calls: CallStruct[], overrides?: Overrides & {
+        all(calls: TrustlessMulticall.CallStruct[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         getBlockHash(blockNumber: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
@@ -81,7 +84,7 @@ export interface TrustlessMulticall extends BaseContract {
         getEthBalance(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
         getLastBlockHash(overrides?: CallOverrides): Promise<[string]>;
     };
-    all(calls: CallStruct[], overrides?: Overrides & {
+    all(calls: TrustlessMulticall.CallStruct[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     getBlockHash(blockNumber: BigNumberish, overrides?: CallOverrides): Promise<string>;
@@ -94,12 +97,12 @@ export interface TrustlessMulticall extends BaseContract {
     getEthBalance(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
     getLastBlockHash(overrides?: CallOverrides): Promise<string>;
     callStatic: {
-        all(calls: CallStruct[], overrides?: CallOverrides): Promise<[
+        all(calls: TrustlessMulticall.CallStruct[], overrides?: CallOverrides): Promise<[
             BigNumber,
-            ResultStructOutput[]
+            TrustlessMulticall.ResultStructOutput[]
         ] & {
             blockNumber: BigNumber;
-            results: ResultStructOutput[];
+            results: TrustlessMulticall.ResultStructOutput[];
         }>;
         getBlockHash(blockNumber: BigNumberish, overrides?: CallOverrides): Promise<string>;
         getBlockNumber(overrides?: CallOverrides): Promise<BigNumber>;
@@ -113,7 +116,7 @@ export interface TrustlessMulticall extends BaseContract {
     };
     filters: {};
     estimateGas: {
-        all(calls: CallStruct[], overrides?: Overrides & {
+        all(calls: TrustlessMulticall.CallStruct[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         getBlockHash(blockNumber: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
@@ -127,7 +130,7 @@ export interface TrustlessMulticall extends BaseContract {
         getLastBlockHash(overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
-        all(calls: CallStruct[], overrides?: Overrides & {
+        all(calls: TrustlessMulticall.CallStruct[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         getBlockHash(blockNumber: BigNumberish, overrides?: CallOverrides): Promise<PopulatedTransaction>;
