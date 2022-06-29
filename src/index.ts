@@ -14,7 +14,7 @@ export const rc  = {
   BigNumber: (result: any) => result as ethers.BigNumber,
   BigNumberToNumber: (result: any) => (result as ethers.BigNumber).toNumber(),
   BigNumberToString: (result: any) => (result as ethers.BigNumber).toString(),
-   BigNumberUnscale: (result: any) => unscale(result),
+  BigNumberUnscale: (result: any) => unscale(result),
 }
 
 export const rcDecimals = (decimals: number) => (result: unknown) => unscale(result as ethers.BigNumber, decimals)
@@ -46,9 +46,9 @@ export const oneContractOneFunctionMC = <
   calls: SpecificCallArgs,
 ) => {
   return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
-    if (contract.address === zeroAddress) {
-      throw new Error('Multicall: oneContractOneFunctionMC called with contract with no address.')
-    }
+    multicallEnforce(
+      contract.address !== zeroAddress,
+      'oneContractOneFunctionMC called with contract with no address.')
 
     const { inputs, outputs, encoding } = getCallMetadata(contract, func, args)
 
@@ -136,7 +136,6 @@ export const executeMulticalls = async <
   try {
     return executeMulticallsImpl(tcpMulticall, multicalls)
   } catch (exception) {
-    console.error('Caught Multicall Execution Error:')
     console.error({exception})
     throw exception
   }
@@ -182,20 +181,17 @@ const executeMulticallsImpl = async <
 
           const call = Object.values(calls)[index]
 
-          if (!rawResult.success) {
-            throw new Error('Multicall Failed: ' + JSON.stringify({
+          multicallEnforce(rawResult.success, `Failed: ${
+            JSON.stringify({
               contract: call.contract.address,
               func: call.func,
               args: call.args,
-            }))
-          }
+            })
+          }`)
 
           const resultsArray = Object.values(abiCoder.decode(call.outputs!, rawResult.returnData))
 
           // TODO as needed: support more than one result
-          const countResults = resultsArray.length
-          if (countResults > 1) console.warn(`multicall ${call.id} (${call.func}) has ${countResults} results.`)
-
           return [Object.keys(calls)[index], call.converter(first(resultsArray))]
       })
     )
@@ -219,8 +215,8 @@ const executeMulticallsImpl = async <
 
 const getFunctionFragment = (contract: Contract, func: string) => {
   const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func)
-  enforce(matchingFunctions.length >= 1, 'Multicall: No matching functions found for ' + func)
-  enforce(matchingFunctions.length <= 1, 'Multicall: Multiple matching functions found for ' + func)
+  multicallEnforce(matchingFunctions.length >= 1, `No matching functions found for ${func}`)
+  multicallEnforce(matchingFunctions.length <= 1, `Multiple matching functions found for ${func}`)
   return first(matchingFunctions)
 }
 
@@ -231,16 +227,21 @@ const getCallMetadata = (contract: Contract, func: string, args: any[]) => {
   const inputs = fragment.inputs
   const outputs = fragment.outputs
 
-  enforce(!fragment.payable, 'function ' + func + ' is payable')
-  enforce(stateMutability === 'view' || stateMutability === 'pure', 'function ' + func + ' mutates state')
-  enforce(
+  multicallEnforce(!fragment.payable, `Function ${func} is payable`)
+  multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${func} mutates state`)
+  multicallEnforce(
     inputs.length === args.length,
-    'Incorrect args sent to function ' + func + ': ' + inputs.length + ' required, ' + args.length + ' given.')
+    `Incorrect args sent to function ${func}: ${inputs.length} required, ${args.length} given.`)
 
   const encoding = contract.interface.encodeFunctionData(func, args)
 
   return {inputs, outputs, encoding}
 }
+
+const prefixMulticallMessage = (message: string) => `[Multicall]: ${message}`
+
+const multicallEnforce = (conditional: boolean, errorMessage: string) =>
+  enforce(conditional, prefixMulticallMessage(errorMessage))
 
 export const idToIdAndArg = (idArgs: string[]) =>
   Object.fromEntries(idArgs.map(idArg => [idArg, [idArg]]))
