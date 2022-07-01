@@ -174,11 +174,12 @@ const executeMulticallsImpl = async <
     call => ({ target: call.contract.address, callData: call.encoding })
   )
 
-  const results = Object.values(calls).length === 0
-    ? {}
-    : Object.fromEntries(
-        (await tcpMulticall.all(rawCalls)).results.map((rawResult, index) => {
+  const fetchResults = async () => {
+    try {
+      const rawResult = await tcpMulticall.all(rawCalls)
 
+      return (
+        Object.fromEntries(rawResult.results.map((rawResult, index) => {
           const call = Object.values(calls)[index]
 
           multicallEnforce(rawResult.success, `Failed: ${
@@ -193,8 +194,14 @@ const executeMulticallsImpl = async <
 
           // TODO as needed: support more than one result
           return [Object.keys(calls)[index], call.converter(first(resultsArray))]
-      })
-    )
+        }))
+      )
+    } catch (error) {
+      throw new Error(prefixMulticallMessage(JSON.stringify({error, calls})))
+    }
+  }
+
+  const results = Object.values(calls).length === 0 ? {} : await fetchResults()
 
   return Object.fromEntries(Object.entries(multicalls).map(([multicallName, innerMulticall]) =>
     [

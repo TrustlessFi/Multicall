@@ -93,19 +93,26 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
     ]))).map(obj => Object.entries(obj)).flat());
     const abiCoder = new ethersUtils.AbiCoder();
     const rawCalls = Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding }));
-    const results = Object.values(calls).length === 0
-        ? {}
-        : Object.fromEntries((yield tcpMulticall.all(rawCalls)).results.map((rawResult, index) => {
-            const call = Object.values(calls)[index];
-            multicallEnforce(rawResult.success, `Failed: ${JSON.stringify({
-                contract: call.contract.address,
-                func: call.func,
-                args: call.args,
-            })}`);
-            const resultsArray = Object.values(abiCoder.decode(call.outputs, rawResult.returnData));
-            // TODO as needed: support more than one result
-            return [Object.keys(calls)[index], call.converter(first(resultsArray))];
-        }));
+    const fetchResults = () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const rawResult = yield tcpMulticall.all(rawCalls);
+            return (Object.fromEntries(rawResult.results.map((rawResult, index) => {
+                const call = Object.values(calls)[index];
+                multicallEnforce(rawResult.success, `Failed: ${JSON.stringify({
+                    contract: call.contract.address,
+                    func: call.func,
+                    args: call.args,
+                })}`);
+                const resultsArray = Object.values(abiCoder.decode(call.outputs, rawResult.returnData));
+                // TODO as needed: support more than one result
+                return [Object.keys(calls)[index], call.converter(first(resultsArray))];
+            })));
+        }
+        catch (error) {
+            throw new Error(prefixMulticallMessage(JSON.stringify({ error, calls })));
+        }
+    });
+    const results = Object.values(calls).length === 0 ? {} : yield fetchResults();
     return Object.fromEntries(Object.entries(multicalls).map(([multicallName, innerMulticall]) => [
         multicallName,
         Object.fromEntries(Object.entries(innerMulticall).map(([innerMulticallName, innerCall]) => [
