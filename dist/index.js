@@ -26,7 +26,7 @@ export const rcDecimals = (decimals) => (result) => unscale(result, decimals);
 export const oneContractOneFunctionMC = (contract, func, converter, calls) => {
     return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
         multicallEnforce(contract.address !== zeroAddress, 'oneContractOneFunctionMC called with contract with no address.');
-        const { inputs, outputs, encoding } = getCallMetadata(contract, func, args);
+        const { inputs, outputs, encoding } = getCallMetadata(contract, func.toString(), args);
         return [id, {
                 id,
                 contract,
@@ -56,14 +56,11 @@ export const oneContractManyFunctionMC = (contract, funcs, args) => {
             }];
     }));
 };
-export const manyContractOneFunctionMC = (contract, inputArgs, func, converter) => {
-    const args = (Array.isArray(inputArgs)
-        ? Object.fromEntries(inputArgs.map(address => [address, []]))
-        : inputArgs);
+export const manyContractOneFunctionMC = (contract, args, func, converter) => {
     return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
         const id = contractAddress;
         const specificContract = contract.attach(contractAddress);
-        const { inputs, outputs, encoding } = getCallMetadata(specificContract, func, callArgs);
+        const { inputs, outputs, encoding } = getCallMetadata(specificContract, func.toString(), callArgs);
         return [id, {
                 id,
                 contract: specificContract,
@@ -140,5 +137,6 @@ const getCallMetadata = (contract, func, args) => {
 };
 const prefixMulticallMessage = (message) => `[Multicall]: ${message}`;
 const multicallEnforce = (conditional, errorMessage) => enforce(conditional, prefixMulticallMessage(errorMessage));
-export const idToIdAndArg = (idArgs) => Object.fromEntries(idArgs.map(idArg => [idArg, [idArg]]));
-export const idToIdAndNoArg = (idArgs) => Object.fromEntries(idArgs.map(idArg => [idArg, []]));
+export const idsToIds = (ids) => Object.fromEntries(ids.map(id => [id, [id]]));
+export const idsToArg = (idArgs, args) => Object.fromEntries(idArgs.map(idArg => [idArg, args]));
+export const idsToNoArg = (ids) => Object.fromEntries(ids.map(id => [id, []]));

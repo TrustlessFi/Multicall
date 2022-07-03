@@ -1,7 +1,7 @@
 // Copyright (c) 2020. All Rights Reserved
 // SPDX-License-Identifier: UNLICENSED
 
-import { Contract, utils as ethersUtils, ethers } from 'ethers'
+import { BaseContract, ContractFunction, utils as ethersUtils, ethers } from 'ethers'
 import { enforce, first, unscale, zeroAddress } from '@trustlessfi/utils'
 import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
 
@@ -26,7 +26,7 @@ type resultConverter<customConverters extends genericResultConverter> = (typeof 
 // TODO convert any to unknown in custom converter
 interface Call<customConverters extends (result: any) => any, CallType extends resultConverter<customConverters>> {
   id: string
-  contract: Contract
+  contract: BaseContract
   func: string
   args: any[]
   converter: CallType
@@ -37,11 +37,13 @@ interface Call<customConverters extends (result: any) => any, CallType extends r
 
 export const oneContractOneFunctionMC = <
   customConverters extends (result: any) => any,
+  specificContract extends BaseContract,
+  funcName extends keyof specificContract["functions"],
+  SpecificCallArgs extends {[id in string]: Parameters<specificContract["functions"][funcName]>},
   ConverterType extends resultConverter<customConverters>,
-  SpecificCallArgs extends {[key in string]: any[]}
 >(
-  contract: Contract,
-  func: string,
+  contract: specificContract,
+  func: funcName,
   converter: ConverterType,
   calls: SpecificCallArgs,
 ) => {
@@ -50,7 +52,7 @@ export const oneContractOneFunctionMC = <
       contract.address !== zeroAddress,
       'oneContractOneFunctionMC called with contract with no address.')
 
-    const { inputs, outputs, encoding } = getCallMetadata(contract, func, args)
+    const { inputs, outputs, encoding } = getCallMetadata(contract, func.toString(), args)
 
     return [id, {
       id,
@@ -62,16 +64,17 @@ export const oneContractOneFunctionMC = <
       outputs,
       encoding,
     }]
-  })) as {[K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>}
+  })) as unknown as {[K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>}
 }
 
 export const oneContractManyFunctionMC = <
+  specificContract extends BaseContract,
   customConverters extends (result: any) => any,
-  Functions extends {[key in string]: resultConverter<customConverters>},
+  Functions extends {[funcName in keyof specificContract["functions"]]?: resultConverter<customConverters>},
 > (
-  contract: Contract,
+  contract: specificContract,
   funcs: Functions,
-  args?: {[key in keyof Functions]?: any[]},
+  args?: {[funcName in keyof Functions]?: any[]},
 ) => {
   return Object.fromEntries(Object.entries(funcs).map(([func, converter]) => {
     const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
@@ -88,29 +91,26 @@ export const oneContractManyFunctionMC = <
       outputs,
       encoding
     }]
-  })) as {[K in keyof Functions]: Call<customConverters, Functions[K]>}
+  })) as unknown as {[K in keyof Functions]: Call<customConverters, NonNullable<Functions[K]>>}
 }
 
 export const manyContractOneFunctionMC = <
+  specificContract extends BaseContract,
+  funcName extends keyof specificContract["functions"],
   customConverters extends (result: any) => any,
   ConverterType extends resultConverter<customConverters>,
-  ArgsArray extends string[],
-  ArgsObject extends {[key in string]: any[]},
+  Args extends {[key in string]: Parameters<specificContract["functions"][funcName]>},
 > (
-  contract: Contract,
-  inputArgs: ArgsObject | ArgsArray,
-  func: string,
+  contract: specificContract,
+  args: Args,
+  func: funcName,
   converter: ConverterType,
 ) => {
-  const args = (Array.isArray(inputArgs)
-    ? Object.fromEntries(inputArgs.map(address => [address, []]))
-    : inputArgs
-  ) as ArgsObject
 
   return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
     const id = contractAddress
     const specificContract = contract.attach(contractAddress)
-    const { inputs, outputs, encoding } = getCallMetadata(specificContract, func, callArgs)
+    const { inputs, outputs, encoding } = getCallMetadata(specificContract, func.toString(), callArgs)
 
     return [id, {
       id,
@@ -122,7 +122,7 @@ export const manyContractOneFunctionMC = <
       outputs,
       encoding,
     }]
-  })) as {[K in keyof ArgsObject]: Call<customConverters, ConverterType>}
+  })) as unknown as {[K in keyof Args]: Call<customConverters, ConverterType>}
 }
 
 export const executeMulticalls = async <
@@ -220,14 +220,14 @@ const executeMulticallsImpl = async <
   }
 }
 
-const getFunctionFragment = (contract: Contract, func: string) => {
+const getFunctionFragment = (contract: BaseContract, func: string) => {
   const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func)
   multicallEnforce(matchingFunctions.length >= 1, `No matching functions found for ${func}`)
   multicallEnforce(matchingFunctions.length <= 1, `Multiple matching functions found for ${func}`)
   return first(matchingFunctions)
 }
 
-const getCallMetadata = (contract: Contract, func: string, args: any[]) => {
+const getCallMetadata = (contract: BaseContract, func: string, args: any[]) => {
   const fragment = getFunctionFragment(contract, func)
 
   const stateMutability = fragment.stateMutability
@@ -250,8 +250,11 @@ const prefixMulticallMessage = (message: string) => `[Multicall]: ${message}`
 const multicallEnforce = (conditional: boolean, errorMessage: string) =>
   enforce(conditional, prefixMulticallMessage(errorMessage))
 
-export const idToIdAndArg = (idArgs: string[]) =>
-  Object.fromEntries(idArgs.map(idArg => [idArg, [idArg]]))
+export const idsToIds = (ids: string[]) =>
+  Object.fromEntries(ids.map(id => [id, [id] as [string]]))
 
-export const idToIdAndNoArg = (idArgs: string[]) =>
-  Object.fromEntries(idArgs.map(idArg => [idArg, []]))
+export const idsToArg = <argsType extends unknown>(idArgs: string[], args: argsType) =>
+  Object.fromEntries(idArgs.map(idArg => [idArg, args]))
+
+export const idsToNoArg = (ids: string[]) =>
+  Object.fromEntries(ids.map(id => [id, [] as []]))
