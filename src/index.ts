@@ -5,10 +5,10 @@ import { BaseContract, ContractFunction, utils as ethersUtils } from 'ethers'
 import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
 import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
 
-interface Call {
+interface Call<specificFunction extends ContractFunction> {
   id: string
   contract: BaseContract
-  func: ContractFunction
+  func: specificFunction
   args: any[]
   inputs: ethersUtils.ParamType[]
   outputs?: ethersUtils.ParamType[]
@@ -39,19 +39,24 @@ export const oneContractOneFunctionMC = <
       inputs,
       outputs,
       encoding,
-    } as Call]
-  })) as {[K in keyof SpecificCallArgs]: Call}
+    } as any]
+  })) as {[K in keyof SpecificCallArgs]: Call<specificContract["functions"][funcName]>}
 }
 
 export const oneContractManyFunctionMC = <
   specificContract extends BaseContract,
-  Functions extends {[funcName in keyof specificContract["functions"]]?: Parameters<specificContract["functions"][funcName]>},
+  contractFunctions extends specificContract["functions"],
+  functionName extends keyof contractFunctions,
+  specificFunctions extends Pick<contractFunctions, functionName>,
 > (
   contract: specificContract,
-  funcs: Functions,
+  funcs: {
+    [funcName in functionName]:
+      Parameters<specificFunctions[funcName]>
+  },
 ) => {
   return Object.fromEntries(Object.entries(funcs).map(([funcName, args]) => {
-    const {inputs, outputs, encoding } = getCallMetadata(contract, funcName, args!)
+    const { inputs, outputs, encoding } = getCallMetadata(contract, funcName, args as any[])
 
     return [funcName, {
       id: funcName,
@@ -61,15 +66,15 @@ export const oneContractManyFunctionMC = <
       inputs,
       outputs,
       encoding
-    } as Call]
-  })) as {[K in keyof Functions]: Call}
+    } as any]
+  })) as {[funcName in keyof specificFunctions]: Call<specificFunctions[funcName]>}
 }
 
 export const manyContractOneFunctionMC = <
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
-  params extends Parameters<specificContract["functions"][funcName]>,
-  Args extends {[key in string]: params},
+  specificFunction extends specificContract["functions"][funcName],
+  Args extends {[key in string]: Parameters<specificFunction>},
 > (
   contract: specificContract,
   funcName: funcName,
@@ -88,12 +93,12 @@ export const manyContractOneFunctionMC = <
       inputs,
       outputs,
       encoding,
-    } as Call]
-  })) as {[K in keyof Args]: Call}
+    } as unknown]
+  })) as {[K in keyof Args]: Call<specificFunction>}
 }
 
 export const executeMulticalls = async <
-  Multicalls extends {[key in string]: {[key in string]: Call}}
+  Multicalls extends {[key in string]: {[key in string]: Call<ContractFunction<unknown>>}}
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -109,7 +114,7 @@ export const executeMulticalls = async <
 type stringObject<valueType> = {[key in string]: valueType}
 
 const executeMulticallsImpl = async <
-  Multicalls extends stringObject<stringObject<Call>>
+  Multicalls extends stringObject<stringObject<Call<ContractFunction<unknown>>>>
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -178,7 +183,10 @@ const executeMulticallsImpl = async <
     ]
   )) as {
     [Multicall in keyof Multicalls]: {
-      [FunctionID in keyof Multicalls[Multicall]]: PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
+      [FunctionID in keyof Multicalls[Multicall]]:
+        PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>> extends Array<unknown>
+        ? PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>[0]
+        : PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
     }
   }
 }
