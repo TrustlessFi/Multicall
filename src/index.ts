@@ -1,50 +1,27 @@
 // Copyright (c) 2020. All Rights Reserved
 // SPDX-License-Identifier: UNLICENSED
 
-import { BaseContract, ContractFunction, utils as ethersUtils, ethers } from 'ethers'
-import { enforce, first, unscale, zeroAddress } from '@trustlessfi/utils'
+import { BaseContract, ContractFunction, utils as ethersUtils } from 'ethers'
+import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
 import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
 
-export const rc  = {
-  Number: (result: any) => result as number,
-  Boolean: (result: any) => result as boolean,
-  Address: (result: any) => result as string,
-  String: (result: any) => result as string,
-  StringArray: (result: any) => result as string[],
-  BigNumber: (result: any) => result as ethers.BigNumber,
-  BigNumberToNumber: (result: any) => (result as ethers.BigNumber).toNumber(),
-  BigNumberToString: (result: any) => (result as ethers.BigNumber).toString(),
-  BigNumberUnscale: (result: any) => unscale(result),
-}
-
-export const rcDecimals = (decimals: number) => (result: unknown) => unscale(result as ethers.BigNumber, decimals)
-
-export type genericResultConverter = (result: unknown) => unknown
-
-type resultConverter<customConverters extends genericResultConverter> = (typeof rc)[keyof typeof rc] | customConverters
-
-// TODO convert any to unknown in custom converter
-interface Call<customConverters extends (result: any) => any, CallType extends resultConverter<customConverters>> {
+interface Call {
   id: string
   contract: BaseContract
-  func: string
+  func: ContractFunction
   args: any[]
-  converter: CallType
   inputs: ethersUtils.ParamType[]
   outputs?: ethersUtils.ParamType[]
   encoding: string
 }
 
 export const oneContractOneFunctionMC = <
-  customConverters extends (result: any) => any,
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
   SpecificCallArgs extends {[id in string]: Parameters<specificContract["functions"][funcName]>},
-  ConverterType extends resultConverter<customConverters>,
 >(
   contract: specificContract,
-  func: funcName,
-  converter: ConverterType,
+  funcName: funcName,
   calls: SpecificCallArgs,
 ) => {
   return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
@@ -52,83 +29,71 @@ export const oneContractOneFunctionMC = <
       contract.address !== zeroAddress,
       'oneContractOneFunctionMC called with contract with no address.')
 
-    const { inputs, outputs, encoding } = getCallMetadata(contract, func.toString(), args)
+    const { inputs, outputs, encoding } = getCallMetadata(contract, funcName.toString(), args)
 
     return [id, {
       id,
       contract,
-      func,
+      func: contract.functions[funcName.toString()],
       args,
-      converter,
       inputs,
       outputs,
       encoding,
-    }]
-  })) as unknown as {[K in keyof SpecificCallArgs]: Call<customConverters, ConverterType>}
+    } as Call]
+  })) as {[K in keyof SpecificCallArgs]: Call}
 }
 
 export const oneContractManyFunctionMC = <
   specificContract extends BaseContract,
-  customConverters extends (result: any) => any,
-  Functions extends {[funcName in keyof specificContract["functions"]]?: resultConverter<customConverters>},
+  Functions extends {[funcName in keyof specificContract["functions"]]?: Parameters<specificContract["functions"][funcName]>},
 > (
   contract: specificContract,
   funcs: Functions,
-  args?: {[funcName in keyof Functions]?: any[]},
 ) => {
-  return Object.fromEntries(Object.entries(funcs).map(([func, converter]) => {
-    const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
-    const args1 = args0 === undefined ? [] : args0
-    const {inputs, outputs, encoding } = getCallMetadata(contract, func, args1)
+  return Object.fromEntries(Object.entries(funcs).map(([funcName, args]) => {
+    const {inputs, outputs, encoding } = getCallMetadata(contract, funcName, args!)
 
-    return [func, {
-      id: func,
+    return [funcName, {
+      id: funcName,
       contract,
-      func,
-      args: args1,
-      converter,
+      func: contract.functions[funcName],
+      args,
       inputs,
       outputs,
       encoding
-    }]
-  })) as unknown as {[K in keyof Functions]: Call<customConverters, NonNullable<Functions[K]>>}
+    } as Call]
+  })) as {[K in keyof Functions]: Call}
 }
 
 export const manyContractOneFunctionMC = <
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
-  customConverters extends (result: any) => any,
-  ConverterType extends resultConverter<customConverters>,
-  Args extends {[key in string]: Parameters<specificContract["functions"][funcName]>},
+  params extends Parameters<specificContract["functions"][funcName]>,
+  Args extends {[key in string]: params},
 > (
   contract: specificContract,
+  funcName: funcName,
   args: Args,
-  func: funcName,
-  converter: ConverterType,
 ) => {
-
   return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
     const id = contractAddress
     const specificContract = contract.attach(contractAddress)
-    const { inputs, outputs, encoding } = getCallMetadata(specificContract, func.toString(), callArgs)
+    const { inputs, outputs, encoding } = getCallMetadata(specificContract, funcName.toString(), callArgs)
 
     return [id, {
       id,
       contract: specificContract,
-      func,
+      func: specificContract.functions[funcName.toString()],
       args: callArgs,
-      converter,
       inputs,
       outputs,
       encoding,
-    }]
-  })) as unknown as {[K in keyof Args]: Call<customConverters, ConverterType>}
+    } as Call]
+  })) as {[K in keyof Args]: Call}
 }
 
 export const executeMulticalls = async <
-  customConverters extends (result: any) => any,
-  ConverterType extends resultConverter<customConverters>,
-  Multicalls extends {[key in string]: {[key in string]: Call<customConverters, ConverterType>}}
+  Multicalls extends {[key in string]: {[key in string]: Call}}
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -144,9 +109,7 @@ export const executeMulticalls = async <
 type stringObject<valueType> = {[key in string]: valueType}
 
 const executeMulticallsImpl = async <
-  customConverters extends (result: any) => any,
-  ConverterType extends Call<customConverters, resultConverter<customConverters>>,
-  Multicalls extends stringObject<stringObject<ConverterType>>
+  Multicalls extends stringObject<stringObject<Call>>
 >(
   tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
@@ -193,7 +156,7 @@ const executeMulticallsImpl = async <
           const resultsArray = Object.values(abiCoder.decode(call.outputs!, rawResult.returnData))
 
           // TODO as needed: support more than one result
-          return [Object.keys(calls)[index], call.converter(first(resultsArray))]
+          return [Object.keys(calls)[index], first(resultsArray)]
         }))
       )
     } catch (error) {
@@ -215,7 +178,7 @@ const executeMulticallsImpl = async <
     ]
   )) as {
     [Multicall in keyof Multicalls]: {
-      [FunctionID in keyof Multicalls[Multicall]]: ReturnType<Multicalls[Multicall][FunctionID]['converter']>
+      [FunctionID in keyof Multicalls[Multicall]]: PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
     }
   }
 }

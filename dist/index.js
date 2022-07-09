@@ -10,63 +10,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { utils as ethersUtils } from 'ethers';
-import { enforce, first, unscale, zeroAddress } from '@trustlessfi/utils';
-export const rc = {
-    Number: (result) => result,
-    Boolean: (result) => result,
-    Address: (result) => result,
-    String: (result) => result,
-    StringArray: (result) => result,
-    BigNumber: (result) => result,
-    BigNumberToNumber: (result) => result.toNumber(),
-    BigNumberToString: (result) => result.toString(),
-    BigNumberUnscale: (result) => unscale(result),
-};
-export const rcDecimals = (decimals) => (result) => unscale(result, decimals);
-export const oneContractOneFunctionMC = (contract, func, converter, calls) => {
+import { enforce, first, zeroAddress } from '@trustlessfi/utils';
+export const oneContractOneFunctionMC = (contract, funcName, calls) => {
     return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
         multicallEnforce(contract.address !== zeroAddress, 'oneContractOneFunctionMC called with contract with no address.');
-        const { inputs, outputs, encoding } = getCallMetadata(contract, func.toString(), args);
+        const { inputs, outputs, encoding } = getCallMetadata(contract, funcName.toString(), args);
         return [id, {
                 id,
                 contract,
-                func,
+                func: contract.functions[funcName.toString()],
                 args,
-                converter,
                 inputs,
                 outputs,
                 encoding,
             }];
     }));
 };
-export const oneContractManyFunctionMC = (contract, funcs, args) => {
-    return Object.fromEntries(Object.entries(funcs).map(([func, converter]) => {
-        const args0 = args === undefined ? [] : args.hasOwnProperty(func) ? args[func] : [];
-        const args1 = args0 === undefined ? [] : args0;
-        const { inputs, outputs, encoding } = getCallMetadata(contract, func, args1);
-        return [func, {
-                id: func,
+export const oneContractManyFunctionMC = (contract, funcs) => {
+    return Object.fromEntries(Object.entries(funcs).map(([funcName, args]) => {
+        const { inputs, outputs, encoding } = getCallMetadata(contract, funcName, args);
+        return [funcName, {
+                id: funcName,
                 contract,
-                func,
-                args: args1,
-                converter,
+                func: contract.functions[funcName],
+                args,
                 inputs,
                 outputs,
                 encoding
             }];
     }));
 };
-export const manyContractOneFunctionMC = (contract, args, func, converter) => {
+export const manyContractOneFunctionMC = (contract, funcName, args) => {
     return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
         const id = contractAddress;
         const specificContract = contract.attach(contractAddress);
-        const { inputs, outputs, encoding } = getCallMetadata(specificContract, func.toString(), callArgs);
+        const { inputs, outputs, encoding } = getCallMetadata(specificContract, funcName.toString(), callArgs);
         return [id, {
                 id,
                 contract: specificContract,
-                func,
+                func: specificContract.functions[funcName.toString()],
                 args: callArgs,
-                converter,
                 inputs,
                 outputs,
                 encoding,
@@ -102,7 +85,7 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
                 })}`);
                 const resultsArray = Object.values(abiCoder.decode(call.outputs, rawResult.returnData));
                 // TODO as needed: support more than one result
-                return [Object.keys(calls)[index], call.converter(first(resultsArray))];
+                return [Object.keys(calls)[index], first(resultsArray)];
             })));
         }
         catch (error) {
