@@ -21,7 +21,7 @@ export declare const executeMulticalls: <Multicalls extends {
     [x: string]: {
         [x: string]: Call<ContractFunction<unknown>>;
     };
-}>(tcpMulticall: TrustlessMulticallViewOnly, multicalls: Multicalls) => Promise<{ [Multicall in keyof Multicalls]: { [FunctionID in keyof Multicalls[Multicall]]: PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>> extends unknown[] ? (unknown[] & PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>>)[0] : PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>>; }; }>;
+}>(tcpMulticall: TrustlessMulticallViewOnly, multicalls: Multicalls) => Promise<{ [Multicall in keyof Multicalls]: Multicalls[Multicall] extends infer T ? { [FunctionID in keyof T]: PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>> extends unknown[] ? (unknown[] & PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>>)[0] : PromiseType<ReturnType<Multicalls[Multicall][FunctionID]["func"]>>; } : never; }>;
 export declare const idsToIds: (ids: string[]) => {
     [k: string]: [string];
 };
