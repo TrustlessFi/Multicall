@@ -33,7 +33,7 @@ contract TrustlessMulticall {
         return (block.number, results);
     }
 
-    function allRevertOnError(WriteCall[] calldata calls) external payable returns (
+    function multicallRevertOnError(WriteCall[] calldata calls) external payable returns (
         bytes[] memory results
     ) {
         WriteCall memory call;
@@ -47,7 +47,7 @@ contract TrustlessMulticall {
                     : call.target.call(call.callData);
 
             if (!success) {
-                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
+                // Next 6 lines from https://ethereum.stackexchange.com/a/83577
                 if (result.length < 68) revert();
                 assembly {
                     result := add(result, 0x04)

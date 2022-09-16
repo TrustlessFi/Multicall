@@ -25,18 +25,6 @@ import type {
 } from "./common";
 
 export declare namespace TrustlessMulticall {
-  export type WriteCallStruct = {
-    target: PromiseOrValue<string>;
-    callData: PromiseOrValue<BytesLike>;
-    value: PromiseOrValue<BigNumberish>;
-  };
-
-  export type WriteCallStructOutput = [string, string, BigNumber] & {
-    target: string;
-    callData: string;
-    value: BigNumber;
-  };
-
   export type ReadCallStruct = {
     target: PromiseOrValue<string>;
     callData: PromiseOrValue<BytesLike>;
@@ -56,11 +44,22 @@ export declare namespace TrustlessMulticall {
     success: boolean;
     returnData: string;
   };
+
+  export type WriteCallStruct = {
+    target: PromiseOrValue<string>;
+    callData: PromiseOrValue<BytesLike>;
+    value: PromiseOrValue<BigNumberish>;
+  };
+
+  export type WriteCallStructOutput = [string, string, BigNumber] & {
+    target: string;
+    callData: string;
+    value: BigNumber;
+  };
 }
 
 export interface TrustlessMulticallInterface extends utils.Interface {
   functions: {
-    "allRevertOnError((address,bytes,uint256)[])": FunctionFragment;
     "getBlockHash(uint256)": FunctionFragment;
     "getBlockNumber()": FunctionFragment;
     "getChainId()": FunctionFragment;
@@ -71,11 +70,11 @@ export interface TrustlessMulticallInterface extends utils.Interface {
     "getEthBalance(address)": FunctionFragment;
     "getLastBlockHash()": FunctionFragment;
     "multicallNoRevertOnError((address,bytes)[])": FunctionFragment;
+    "multicallRevertOnError((address,bytes,uint256)[])": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "allRevertOnError"
       | "getBlockHash"
       | "getBlockNumber"
       | "getChainId"
@@ -86,12 +85,9 @@ export interface TrustlessMulticallInterface extends utils.Interface {
       | "getEthBalance"
       | "getLastBlockHash"
       | "multicallNoRevertOnError"
+      | "multicallRevertOnError"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "allRevertOnError",
-    values: [TrustlessMulticall.WriteCallStruct[]]
-  ): string;
   encodeFunctionData(
     functionFragment: "getBlockHash",
     values: [PromiseOrValue<BigNumberish>]
@@ -132,11 +128,11 @@ export interface TrustlessMulticallInterface extends utils.Interface {
     functionFragment: "multicallNoRevertOnError",
     values: [TrustlessMulticall.ReadCallStruct[]]
   ): string;
+  encodeFunctionData(
+    functionFragment: "multicallRevertOnError",
+    values: [TrustlessMulticall.WriteCallStruct[]]
+  ): string;
 
-  decodeFunctionResult(
-    functionFragment: "allRevertOnError",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getBlockHash",
     data: BytesLike
@@ -174,6 +170,10 @@ export interface TrustlessMulticallInterface extends utils.Interface {
     functionFragment: "multicallNoRevertOnError",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "multicallRevertOnError",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
@@ -205,11 +205,6 @@ export interface TrustlessMulticall extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    allRevertOnError(
-      calls: TrustlessMulticall.WriteCallStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     getBlockHash(
       blockNumber: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -238,12 +233,12 @@ export interface TrustlessMulticall extends BaseContract {
       calls: TrustlessMulticall.ReadCallStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-  };
 
-  allRevertOnError(
-    calls: TrustlessMulticall.WriteCallStruct[],
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+    multicallRevertOnError(
+      calls: TrustlessMulticall.WriteCallStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+  };
 
   getBlockHash(
     blockNumber: PromiseOrValue<BigNumberish>,
@@ -274,12 +269,12 @@ export interface TrustlessMulticall extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  callStatic: {
-    allRevertOnError(
-      calls: TrustlessMulticall.WriteCallStruct[],
-      overrides?: CallOverrides
-    ): Promise<string[]>;
+  multicallRevertOnError(
+    calls: TrustlessMulticall.WriteCallStruct[],
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
+  callStatic: {
     getBlockHash(
       blockNumber: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -313,16 +308,16 @@ export interface TrustlessMulticall extends BaseContract {
         results: TrustlessMulticall.ReadResultStructOutput[];
       }
     >;
+
+    multicallRevertOnError(
+      calls: TrustlessMulticall.WriteCallStruct[],
+      overrides?: CallOverrides
+    ): Promise<string[]>;
   };
 
   filters: {};
 
   estimateGas: {
-    allRevertOnError(
-      calls: TrustlessMulticall.WriteCallStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     getBlockHash(
       blockNumber: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -351,14 +346,14 @@ export interface TrustlessMulticall extends BaseContract {
       calls: TrustlessMulticall.ReadCallStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    multicallRevertOnError(
+      calls: TrustlessMulticall.WriteCallStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    allRevertOnError(
-      calls: TrustlessMulticall.WriteCallStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     getBlockHash(
       blockNumber: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -394,6 +389,11 @@ export interface TrustlessMulticall extends BaseContract {
     multicallNoRevertOnError(
       calls: TrustlessMulticall.ReadCallStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    multicallRevertOnError(
+      calls: TrustlessMulticall.WriteCallStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }
