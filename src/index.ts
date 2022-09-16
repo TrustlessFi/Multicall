@@ -1,24 +1,37 @@
 // Copyright (c) 2020. All Rights Reserved
 // SPDX-License-Identifier: UNLICENSED
 
-import { BaseContract, ContractFunction, utils as ethersUtils } from 'ethers'
+import { BaseContract, ContractFunction, utils as ethersUtils, BigNumber, BigNumberish, Contract } from 'ethers';
 import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
-import { TrustlessMulticallViewOnly } from './typechain/TrustlessMulticallViewOnly'
+import { TrustlessMulticallViewOnly, TrustlessMulticall } from './types'
+import { FunctionFragment } from 'ethers/lib/utils'
+
+const bnf = (bn: BigNumberish) => BigNumber.from(bn)
 
 interface Call<specificFunction extends ContractFunction> {
   id: string
   contract: BaseContract
   func: specificFunction
   args: any[]
-  inputs: ethersUtils.ParamType[]
-  outputs?: ethersUtils.ParamType[]
+  value: BigNumberish,
+  fragment: FunctionFragment,
   encoding: string
 }
+
+interface ArgumentsAndValue<parameters> {
+  args: parameters, 
+  value: BigNumberish
+}
+
+type argsOrArgsAndValue<parameters> = parameters | ArgumentsAndValue<parameters>
+
+const isArgumentsAndValue = <T>(rawArgs: ArgumentsAndValue<T> | any): rawArgs is ArgumentsAndValue<T> => 
+  (rawArgs as ArgumentsAndValue<T>).value !== undefined
 
 export const oneContractOneFunctionMC = <
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
-  SpecificCallArgs extends {[id in string]: Parameters<specificContract["functions"][funcName]>},
+  SpecificCallArgs extends {[id in string]: argsOrArgsAndValue<Parameters<specificContract["functions"][funcName]>>},
 >(
   contract: specificContract,
   funcName: funcName,
@@ -29,15 +42,15 @@ export const oneContractOneFunctionMC = <
       contract.address !== zeroAddress,
       'oneContractOneFunctionMC called with contract with no address.')
 
-    const { inputs, outputs, encoding } = getCallMetadata(contract, funcName.toString(), args)
+    const { fragment, encoding, value } = getCallMetadata(contract, funcName.toString(), args)
 
     return [id, {
       id,
       contract,
       func: contract.functions[funcName.toString()],
       args,
-      inputs,
-      outputs,
+      value,
+      fragment,
       encoding,
     } as any]
   })) as {[K in keyof SpecificCallArgs]: Call<specificContract["functions"][funcName]>}
@@ -50,22 +63,19 @@ export const oneContractManyFunctionMC = <
   specificFunctions extends Pick<contractFunctions, functionName>,
 > (
   contract: specificContract,
-  funcs: {
-    [funcName in functionName]:
-      Parameters<specificFunctions[funcName]>
-  },
+  funcs: {[funcName in functionName]: argsOrArgsAndValue<Parameters<specificFunctions[funcName]>>}
 ) => {
   return Object.fromEntries(Object.entries(funcs).map(([funcName, args]) => {
-    const { inputs, outputs, encoding } = getCallMetadata(contract, funcName, args as any[])
+    const { fragment, encoding, value } = getCallMetadata(contract, funcName, args as argsOrArgsAndValue<unknown[]>)
 
     return [funcName, {
       id: funcName,
       contract,
       func: contract.functions[funcName],
       args,
-      inputs,
-      outputs,
-      encoding
+      fragment,
+      encoding,
+      value,
     } as any]
   })) as {[funcName in keyof specificFunctions]: Call<specificFunctions[funcName]>}
 }
@@ -74,7 +84,7 @@ export const manyContractOneFunctionMC = <
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
   specificFunction extends specificContract["functions"][funcName],
-  Args extends {[key in string]: Parameters<specificFunction>},
+  Args extends {[key in string]: argsOrArgsAndValue<Parameters<specificFunction>>},
 > (
   contract: specificContract,
   funcName: funcName,
@@ -83,16 +93,16 @@ export const manyContractOneFunctionMC = <
   return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
     const id = contractAddress
     const specificContract = contract.attach(contractAddress)
-    const { inputs, outputs, encoding } = getCallMetadata(specificContract, funcName.toString(), callArgs)
+    const { fragment, encoding, value } = getCallMetadata(specificContract, funcName.toString(), callArgs)
 
     return [id, {
       id,
       contract: specificContract,
       func: specificContract.functions[funcName.toString()],
       args: callArgs,
-      inputs,
-      outputs,
+      fragment,
       encoding,
+      value,
     } as unknown]
   })) as {[K in keyof Args]: Call<specificFunction>}
 }
@@ -100,26 +110,36 @@ export const manyContractOneFunctionMC = <
 export const executeMulticalls = async <
   Multicalls extends {[key in string]: {[key in string]: Call<ContractFunction<unknown>>}}
 >(
-  tcpMulticall: TrustlessMulticallViewOnly,
+  tcpMulticall: TrustlessMulticall,
   multicalls: Multicalls,
 ) => {
   try {
     return executeMulticallsImpl(tcpMulticall, multicalls)
-  } catch (exception) {
-    console.error({exception})
-    throw exception
+  } catch (multicallExcepetion) {
+    console.error({multicallExcepetion})
+    throw multicallExcepetion
+  }
+}
+
+export const executeWriteMulticalls = async <
+  Multicalls extends {[key in string]: {[key in string]: Call<ContractFunction<unknown>>}}
+>(
+  tcpMulticall: TrustlessMulticall,
+  multicalls: Multicalls,
+) => {
+  try {
+    return executeWriteMulticallsImpl(tcpMulticall, multicalls)
+  } catch (multicallExcepetion) {
+    console.error({multicallExcepetion})
+    throw multicallExcepetion
   }
 }
 
 type stringObject<valueType> = {[key in string]: valueType}
+type Multicalls = stringObject<stringObject<Call<ContractFunction<unknown>>>>
 
-const executeMulticallsImpl = async <
-  Multicalls extends stringObject<stringObject<Call<ContractFunction<unknown>>>>
->(
-  tcpMulticall: TrustlessMulticallViewOnly,
-  multicalls: Multicalls,
-) => {
-  const calls =
+const extractCallList = (multicalls: Multicalls) : {[key in string]: Call<ContractFunction<unknown>>} => {
+  return (
     Object.fromEntries(
       Object.values(
         Object.fromEntries(
@@ -135,16 +155,51 @@ const executeMulticallsImpl = async <
         )
       ).map(obj => Object.entries(obj)).flat()
     )
+  )
+}
+
+const executeWriteMulticallsImpl = async (
+  tcpMulticall: TrustlessMulticall,
+  multicalls: Multicalls,
+) => {
+  const calls = extractCallList(multicalls)
+
+  Object.values(calls).map(call => {
+    const stateMutability = call.fragment.stateMutability
+    multicallEnforce(stateMutability !== 'view' && stateMutability !== 'pure', `Function ${call.fragment.name} does not update state.`)
+    if (bnf(call.value).gt(0)) {
+      multicallEnforce(call.fragment.payable, `Function ${call.fragment.name} is not payable, but value of ${bnf(call.value).toString()} was sent.`)
+    }
+  })
+
+  return await tcpMulticall.multicallRevertOnError(
+    Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding, value: call.value })),
+    {value: Object.values(calls).map(call => call.value).reduce((a, b) => bnf(a).add(bnf(b)))}
+  )
+}
+
+const executeMulticallsImpl = async <
+  Multicalls extends stringObject<stringObject<Call<ContractFunction<unknown>>>>,
+>(
+  tcpMulticall: TrustlessMulticall,
+  multicalls: Multicalls,
+) => {
+  const calls = extractCallList(multicalls)
+
+  Object.values(calls).map(call => {
+    const stateMutability = call.fragment.stateMutability
+    multicallEnforce(!call.fragment.payable, `Function ${call.fragment.name} is payable.`)
+    multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${call.fragment.name} updates state.`)
+  })
 
   const abiCoder = new ethersUtils.AbiCoder()
 
-  const rawCalls = Object.values(calls).map(
-    call => ({ target: call.contract.address, callData: call.encoding })
-  )
-
   const fetchResults = async () => {
     try {
-      const rawResult = await tcpMulticall.all(rawCalls)
+      const rawResult = 
+        await (tcpMulticall as unknown as TrustlessMulticallViewOnly).multicallNoRevertOnError(
+          Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding }))
+        )
 
       return (
         Object.fromEntries(rawResult.results.map((rawResult, index) => {
@@ -158,7 +213,7 @@ const executeMulticallsImpl = async <
             })
           }`)
 
-          const resultsArray = Object.values(abiCoder.decode(call.outputs!, rawResult.returnData))
+          const resultsArray = Object.values(abiCoder.decode(call.fragment.outputs!, rawResult.returnData))
 
           // TODO as needed: support more than one result
           return [Object.keys(calls)[index], first(resultsArray)]
@@ -191,29 +246,34 @@ const executeMulticallsImpl = async <
   }
 }
 
+const getCallMetadata = <T extends Parameters<any>>(
+  contract: BaseContract, 
+  func: string, 
+  rawArgs: argsOrArgsAndValue<T>
+) => {
+  const args =
+    isArgumentsAndValue(rawArgs)
+      ? rawArgs.args as T
+      : rawArgs
+
+  const value = isArgumentsAndValue(rawArgs) ? rawArgs.value : 0
+
+  const fragment = getFunctionFragment(contract, func)
+
+  multicallEnforce(
+    fragment.inputs.length === args.length,
+    `Incorrect args sent to function ${func}: ${fragment.inputs.length} required, ${args.length} given.`)
+
+  const encoding = contract.interface.encodeFunctionData(func, args)
+
+  return {fragment, encoding, value}
+}
+
 const getFunctionFragment = (contract: BaseContract, func: string) => {
   const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func)
   multicallEnforce(matchingFunctions.length >= 1, `No matching functions found for ${func}`)
   multicallEnforce(matchingFunctions.length <= 1, `Multiple matching functions found for ${func}`)
   return first(matchingFunctions)
-}
-
-const getCallMetadata = (contract: BaseContract, func: string, args: any[]) => {
-  const fragment = getFunctionFragment(contract, func)
-
-  const stateMutability = fragment.stateMutability
-  const inputs = fragment.inputs
-  const outputs = fragment.outputs
-
-  multicallEnforce(!fragment.payable, `Function ${func} is payable`)
-  multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${func} mutates state`)
-  multicallEnforce(
-    inputs.length === args.length,
-    `Incorrect args sent to function ${func}: ${inputs.length} required, ${args.length} given.`)
-
-  const encoding = contract.interface.encodeFunctionData(func, args)
-
-  return {inputs, outputs, encoding}
 }
 
 const prefixMulticallMessage = (message: string) => `[Multicall]: ${message}`
