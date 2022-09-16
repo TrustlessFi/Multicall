@@ -11,24 +11,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.idsToNoArg = exports.idsToArg = exports.idsToIds = exports.executeMulticalls = exports.manyContractOneFunctionMC = exports.oneContractManyFunctionMC = exports.oneContractOneFunctionMC = void 0;
+exports.idsToNoArg = exports.idsToArg = exports.idsToIds = exports.executeWriteMulticalls = exports.executeMulticalls = exports.manyContractOneFunctionMC = exports.oneContractManyFunctionMC = exports.oneContractOneFunctionMC = void 0;
 const ethers_1 = require("ethers");
 const utils_1 = require("@trustlessfi/utils");
-var MulticallInteractionType;
-(function (MulticallInteractionType) {
-    MulticallInteractionType["View"] = "View";
-    MulticallInteractionType["WriteTransaction"] = "WriteTransaction";
-})(MulticallInteractionType || (MulticallInteractionType = {}));
+const bnf = (bn) => ethers_1.BigNumber.from(bn);
 const isArgumentsAndValue = (rawArgs) => rawArgs.value !== undefined;
 const oneContractOneFunctionMC = (contract, funcName, calls) => {
     return Object.fromEntries(Object.entries(calls).map(([id, args]) => {
         multicallEnforce(contract.address !== utils_1.zeroAddress, 'oneContractOneFunctionMC called with contract with no address.');
-        const { fragment, encoding } = getCallMetadata(contract, funcName.toString(), args);
+        const { fragment, encoding, value } = getCallMetadata(contract, funcName.toString(), args);
         return [id, {
                 id,
                 contract,
                 func: contract.functions[funcName.toString()],
                 args,
+                value,
                 fragment,
                 encoding,
             }];
@@ -37,14 +34,15 @@ const oneContractOneFunctionMC = (contract, funcName, calls) => {
 exports.oneContractOneFunctionMC = oneContractOneFunctionMC;
 const oneContractManyFunctionMC = (contract, funcs) => {
     return Object.fromEntries(Object.entries(funcs).map(([funcName, args]) => {
-        const { fragment, encoding } = getCallMetadata(contract, funcName, args);
+        const { fragment, encoding, value } = getCallMetadata(contract, funcName, args);
         return [funcName, {
                 id: funcName,
                 contract,
                 func: contract.functions[funcName],
                 args,
                 fragment,
-                encoding
+                encoding,
+                value,
             }];
     }));
 };
@@ -53,7 +51,7 @@ const manyContractOneFunctionMC = (contract, funcName, args) => {
     return Object.fromEntries(Object.entries(args).map(([contractAddress, callArgs]) => {
         const id = contractAddress;
         const specificContract = contract.attach(contractAddress);
-        const { fragment, encoding } = getCallMetadata(specificContract, funcName.toString(), callArgs);
+        const { fragment, encoding, value } = getCallMetadata(specificContract, funcName.toString(), callArgs);
         return [id, {
                 id,
                 contract: specificContract,
@@ -61,13 +59,14 @@ const manyContractOneFunctionMC = (contract, funcName, args) => {
                 args: callArgs,
                 fragment,
                 encoding,
+                value,
             }];
     }));
 };
 exports.manyContractOneFunctionMC = manyContractOneFunctionMC;
-const executeMulticalls = (tcpMulticall, multicalls, interactionType = MulticallInteractionType.View) => __awaiter(void 0, void 0, void 0, function* () {
+const executeMulticalls = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        return executeMulticallsImpl(tcpMulticall, multicalls, interactionType);
+        return executeMulticallsImpl(tcpMulticall, multicalls);
     }
     catch (multicallExcepetion) {
         console.error({ multicallExcepetion });
@@ -75,20 +74,45 @@ const executeMulticalls = (tcpMulticall, multicalls, interactionType = Multicall
     }
 });
 exports.executeMulticalls = executeMulticalls;
-const executeMulticallsImpl = (tcpMulticall, multicalls, interactionType) => __awaiter(void 0, void 0, void 0, function* () {
-    const calls = Object.fromEntries(Object.values(Object.fromEntries(Object.entries(multicalls)
+const executeWriteMulticalls = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        return executeWriteMulticallsImpl(tcpMulticall, multicalls);
+    }
+    catch (multicallExcepetion) {
+        console.error({ multicallExcepetion });
+        throw multicallExcepetion;
+    }
+});
+exports.executeWriteMulticalls = executeWriteMulticalls;
+const extractCallList = (multicalls) => {
+    return (Object.fromEntries(Object.values(Object.fromEntries(Object.entries(multicalls)
         .map(([multicallName, innerMulticall]) => [
         multicallName,
         Object.fromEntries(Object.entries(innerMulticall).map(([innerName, innerCall]) => [[multicallName, innerName, innerCall.id].join(':'), innerCall]))
-    ]))).map(obj => Object.entries(obj)).flat());
+    ]))).map(obj => Object.entries(obj)).flat()));
+};
+const executeWriteMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
+    const calls = extractCallList(multicalls);
     Object.values(calls).map(call => {
-        checkCallMetadata(call.fragment, interactionType);
+        const stateMutability = call.fragment.stateMutability;
+        multicallEnforce(stateMutability !== 'view' && stateMutability !== 'pure', `Function ${call.fragment.name} does not update state.`);
+        if (bnf(call.value).gt(0)) {
+            multicallEnforce(call.fragment.payable, `Function ${call.fragment.name} is not payable, but value of ${bnf(call.value).toString()} was sent.`);
+        }
+    });
+    return yield tcpMulticall.multicallRevertOnError(Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding, value: call.value })), { value: Object.values(calls).map(call => call.value).reduce((a, b) => bnf(a).add(bnf(b))) });
+});
+const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, void 0, void 0, function* () {
+    const calls = extractCallList(multicalls);
+    Object.values(calls).map(call => {
+        const stateMutability = call.fragment.stateMutability;
+        multicallEnforce(!call.fragment.payable, `Function ${call.fragment.name} is payable.`);
+        multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${call.fragment.name} updates state.`);
     });
     const abiCoder = new ethers_1.utils.AbiCoder();
-    const rawCalls = Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding }));
     const fetchResults = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const rawResult = yield tcpMulticall.multicallNoRevertOnError(rawCalls);
+            const rawResult = yield tcpMulticall.multicallNoRevertOnError(Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding })));
             return (Object.fromEntries(rawResult.results.map((rawResult, index) => {
                 const call = Object.values(calls)[index];
                 multicallEnforce(rawResult.success, `Failed: ${JSON.stringify({
@@ -114,24 +138,15 @@ const executeMulticallsImpl = (tcpMulticall, multicalls, interactionType) => __a
         ]))
     ]));
 });
-const checkCallMetadata = (fragment, interactionType) => {
-    const stateMutability = fragment.stateMutability;
-    if (interactionType === MulticallInteractionType.View) {
-        multicallEnforce(!fragment.payable, `Function ${fragment.name} is payable.`);
-        multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${fragment.name} updates state.`);
-    }
-    else {
-        multicallEnforce(stateMutability !== 'view' && stateMutability !== 'pure', `Function ${fragment.name} does not update state.`);
-    }
-};
 const getCallMetadata = (contract, func, rawArgs) => {
     const args = isArgumentsAndValue(rawArgs)
         ? rawArgs.args
         : rawArgs;
+    const value = isArgumentsAndValue(rawArgs) ? rawArgs.value : 0;
     const fragment = getFunctionFragment(contract, func);
     multicallEnforce(fragment.inputs.length === args.length, `Incorrect args sent to function ${func}: ${fragment.inputs.length} required, ${args.length} given.`);
     const encoding = contract.interface.encodeFunctionData(func, args);
-    return { fragment, encoding };
+    return { fragment, encoding, value };
 };
 const getFunctionFragment = (contract, func) => {
     const matchingFunctions = Object.values(contract.interface.functions).filter(interfaceFunction => interfaceFunction.name === func);

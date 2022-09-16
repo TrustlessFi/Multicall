@@ -4,12 +4,7 @@
 import { BaseContract, ContractFunction, utils as ethersUtils, BigNumber, BigNumberish, Contract } from 'ethers';
 import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
 import { TrustlessMulticallViewOnly, TrustlessMulticall } from './types'
-import { Fragment, FunctionFragment } from 'ethers/lib/utils'
-
-enum MulticallInteractionType {
-  View = 'View',
-  WriteTransaction = 'WriteTransaction',
-}
+import { FunctionFragment } from 'ethers/lib/utils'
 
 const bnf = (bn: BigNumberish) => BigNumber.from(bn)
 
@@ -183,7 +178,6 @@ const executeWriteMulticallsImpl = async (
   )
 }
 
-
 const executeMulticallsImpl = async <
   Multicalls extends stringObject<stringObject<Call<ContractFunction<unknown>>>>,
 >(
@@ -249,16 +243,6 @@ const executeMulticallsImpl = async <
         ? PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>[0]
         : PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
     }
-  }
-}
-
-const checkCallMetadata = (call: Call<ContractFunction<unknown>>, interactionType: MulticallInteractionType) => {
-  const stateMutability = call.fragment.stateMutability
-  if (interactionType === MulticallInteractionType.View) {
-    multicallEnforce(!call.fragment.payable, `Function ${call.fragment.name} is payable.`)
-    multicallEnforce(stateMutability === 'view' || stateMutability === 'pure', `Function ${call.fragment.name} updates state.`)
-  } else {
-    multicallEnforce(stateMutability !== 'view' && stateMutability !== 'pure', `Function ${call.fragment.name} does not update state.`)
   }
 }
 
