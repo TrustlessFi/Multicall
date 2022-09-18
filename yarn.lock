@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 5
+  version: 6
   cacheKey: 8
 
 "@cspotcode/source-map-support@npm:^0.8.0":
@@ -1076,28 +1076,28 @@ __metadata:
 "@nomicfoundation/solidity-analyzer-linux-arm64-gnu@npm:0.0.3":
   version: 0.0.3
   resolution: "@nomicfoundation/solidity-analyzer-linux-arm64-gnu@npm:0.0.3"
-  conditions: os=linux & cpu=arm64
+  conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
 "@nomicfoundation/solidity-analyzer-linux-arm64-musl@npm:0.0.3":
   version: 0.0.3
   resolution: "@nomicfoundation/solidity-analyzer-linux-arm64-musl@npm:0.0.3"
-  conditions: os=linux & cpu=arm64
+  conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
 "@nomicfoundation/solidity-analyzer-linux-x64-gnu@npm:0.0.3":
   version: 0.0.3
   resolution: "@nomicfoundation/solidity-analyzer-linux-x64-gnu@npm:0.0.3"
-  conditions: os=linux & cpu=x64
+  conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
 "@nomicfoundation/solidity-analyzer-linux-x64-musl@npm:0.0.3":
   version: 0.0.3
   resolution: "@nomicfoundation/solidity-analyzer-linux-x64-musl@npm:0.0.3"
-  conditions: os=linux & cpu=x64
+  conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
