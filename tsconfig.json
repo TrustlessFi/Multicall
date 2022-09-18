@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "commonjs",
+    "module": "esnext",
     "lib": [
       "dom",
       "dom.iterable",
@@ -20,9 +20,6 @@
     "declaration": true
   },
   "include": [
-    "./src/index.ts"
-  ],
-  "exclude": [
-    "./src/types/factories/**/*.ts"
-  ],
+    "src"
+  ]
 }
