@@ -3,7 +3,7 @@
 
 import { BaseContract, ContractFunction, utils as ethersUtils, BigNumber, BigNumberish, Contract } from 'ethers';
 import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
-import { TrustlessMulticallViewOnly, TrustlessMulticall } from './types'
+import { TrustlessMulticallViewOnly, TrustlessMulticall } from '@trustlessfi/multicall-contracts'
 import { FunctionFragment } from 'ethers/lib/utils'
 
 const bnf = (bn: BigNumberish) => BigNumber.from(bn)
@@ -110,7 +110,7 @@ export const manyContractOneFunctionMC = <
 export const executeMulticalls = async <
   Multicalls extends {[key in string]: {[key in string]: Call<ContractFunction<unknown>>}}
 >(
-  tcpMulticall: TrustlessMulticall,
+  tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
 ) => {
   try {
@@ -181,7 +181,7 @@ const executeWriteMulticallsImpl = async (
 const executeMulticallsImpl = async <
   Multicalls extends stringObject<stringObject<Call<ContractFunction<unknown>>>>,
 >(
-  tcpMulticall: TrustlessMulticall,
+  tcpMulticall: TrustlessMulticallViewOnly,
   multicalls: Multicalls,
 ) => {
   const calls = extractCallList(multicalls)
@@ -197,7 +197,7 @@ const executeMulticallsImpl = async <
   const fetchResults = async () => {
     try {
       const rawResult = 
-        await (tcpMulticall as unknown as TrustlessMulticallViewOnly).multicallNoRevertOnError(
+        await tcpMulticall.multicallNoRevertOnError(
           Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding }))
         )
 

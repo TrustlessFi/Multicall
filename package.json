@@ -1,12 +1,13 @@
 {
   "name": "@trustlessfi/multicall",
-  "version": "0.7.4",
+  "version": "0.7.7",
   "description": "Multicall for easily retrieving strongly typed view data from the ethereum blockchain.",
   "repository": "https://github.com/TrustlessFi/Multicall",
   "author": "TrustlessOfficial <TrustlessFi@protonmail.com>",
   "license": "MIT",
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "@trustlessfi/multicall-contracts": "0.1.5",
     "@trustlessfi/utils": "^0.2.9",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.3",
