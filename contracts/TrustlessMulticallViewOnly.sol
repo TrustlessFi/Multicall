@@ -8,7 +8,9 @@ import './TrustlessMulticall.sol';
 
 contract TrustlessMulticallViewOnly {
 
-    function multicallNoRevertOnError(TrustlessMulticall.ReadCall[] calldata calls) external view virtual returns (
+    function read(
+        TrustlessMulticall.ReadCall[] calldata calls
+    ) external view virtual returns (
         uint256 blockNumber,
         TrustlessMulticall.ReadResult[] memory results
     ) {}

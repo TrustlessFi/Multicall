@@ -3,16 +3,13 @@
 
 pragma solidity =0.8.17;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 
 contract TrustlessMulticall {
     struct ReadCall { 
         address target; 
         bytes callData; 
-    }
-    struct WriteCall { 
-        address target; 
-        bytes callData; 
-        uint256 value;
     }
 
     struct ReadResult { 
@@ -20,7 +17,7 @@ contract TrustlessMulticall {
         bytes returnData; 
     }
 
-    function multicallNoRevertOnError(ReadCall[] calldata calls) external returns (
+    function read(ReadCall[] calldata calls) external returns (
         uint256 blockNumber,
         ReadResult[] memory results
     ) {
@@ -33,7 +30,15 @@ contract TrustlessMulticall {
         return (block.number, results);
     }
 
-    function multicallRevertOnError(WriteCall[] calldata calls) external payable returns (
+    struct WriteCall { 
+        address target; 
+        bytes callData; 
+        uint256 value;
+    }
+
+    function write(
+      WriteCall[] calldata calls
+    ) external payable nonReentrant returns (
         bytes[] memory results
     ) {
         WriteCall memory call;
