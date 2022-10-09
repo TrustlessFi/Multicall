@@ -3,10 +3,9 @@
 
 pragma solidity =0.8.17;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
-
-contract TrustlessMulticall {
+contract TrustlessMulticall is ReentrancyGuard {
     struct ReadCall { 
         address target; 
         bytes callData; 
@@ -34,10 +33,11 @@ contract TrustlessMulticall {
         address target; 
         bytes callData; 
         uint256 value;
-    }
+    } 
 
     function write(
-      WriteCall[] calldata calls
+        WriteCall[] calldata calls,
+        bool revertOnCallFailure
     ) external payable nonReentrant returns (
         bytes[] memory results
     ) {
@@ -51,7 +51,7 @@ contract TrustlessMulticall {
                     ? payable(call.target).call{value: call.value}(call.callData)
                     : call.target.call(call.callData);
 
-            if (!success) {
+            if (revertOnCallFailure && !success) {
                 // Next 6 lines from https://ethereum.stackexchange.com/a/83577
                 if (result.length < 68) revert();
                 assembly {
@@ -65,41 +65,5 @@ contract TrustlessMulticall {
         }
 
         return results;
-    }
-
-    function getCurrentBlockDifficulty() external view returns (uint256) {
-        return block.difficulty;
-    }
-
-    function getCurrentBlockGasLimit() external view returns (uint256) {
-        return block.gaslimit;
-    }
-
-    function getCurrentBlockTimestamp() external view returns (uint256) {
-         return block.timestamp;
-    }
-
-    function getEthBalance(address addr) external view returns (uint256) {
-        return addr.balance;
-    }
-
-    function getBlockNumber() external view returns (uint256) {
-        return block.number;
-    }
-
-    function getBlockHash(uint256 blockNumber) external view returns (bytes32) {
-        return blockhash(blockNumber);
-    }
-
-    function getLastBlockHash() external view returns (bytes32) {
-        return blockhash(block.number - 1);
-    }
-
-    function getCurrentBlockCoinbase() external view returns (address) {
-        return block.coinbase;
-    }
-
-    function getChainId() external view returns (uint) {
-        return block.chainid;
     }
 }

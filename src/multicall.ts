@@ -126,12 +126,13 @@ export const executeWriteMulticalls = async <
 >(
   tcpMulticall: TrustlessMulticall,
   multicalls: Multicalls,
+  revertOnCallFailure: boolean,
 ) => {
   try {
-    return executeWriteMulticallsImpl(tcpMulticall, multicalls)
-  } catch (multicallExcepetion) {
-    console.error({multicallExcepetion})
-    throw multicallExcepetion
+    return executeWriteMulticallsImpl(tcpMulticall, multicalls, revertOnCallFailure)
+  } catch (multicallException) {
+    console.error({multicallException})
+    throw multicallException
   }
 }
 
@@ -161,20 +162,23 @@ const extractCallList = (multicalls: Multicalls) : {[key in string]: Call<Contra
 const executeWriteMulticallsImpl = async (
   tcpMulticall: TrustlessMulticall,
   multicalls: Multicalls,
+ revertOnCallFailure: boolean,
 ) => {
   const calls = extractCallList(multicalls)
 
   Object.values(calls).map(call => {
     const stateMutability = call.fragment.stateMutability
+
     multicallEnforce(stateMutability !== 'view' && stateMutability !== 'pure', `Function ${call.fragment.name} does not update state.`)
     if (bnf(call.value).gt(0)) {
       multicallEnforce(call.fragment.payable, `Function ${call.fragment.name} is not payable, but value of ${bnf(call.value).toString()} was sent.`)
     }
   })
 
-  return await tcpMulticall.multicallRevertOnError(
+  return await tcpMulticall.write(
     Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding, value: call.value })),
-    {value: Object.values(calls).map(call => call.value).reduce((a, b) => bnf(a).add(bnf(b)))}
+    revertOnCallFailure,
+    {value: Object.values(calls).map(call => call.value).reduce((a, b) => bnf(a).add(bnf(b)))},
   )
 }
 
