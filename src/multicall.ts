@@ -201,7 +201,7 @@ const executeMulticallsImpl = async <
   const fetchResults = async () => {
     try {
       const rawResult = 
-        await tcpMulticall.multicallNoRevertOnError(
+        await tcpMulticall.read(
           Object.values(calls).map(call => ({ target: call.contract.address, callData: call.encoding }))
         )
 
