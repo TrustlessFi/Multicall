@@ -6,6 +6,8 @@ import type {
   BigNumber,
   BytesLike,
   CallOverrides,
+  ContractTransaction,
+  Overrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -42,7 +44,7 @@ export declare namespace TrustlessMulticallRead {
   };
 }
 
-export interface TrustlessMulticallViewOnlyInterface extends utils.Interface {
+export interface TrustlessMulticallReadInterface extends utils.Interface {
   functions: {
     "read((address,bytes)[])": FunctionFragment;
   };
@@ -59,12 +61,12 @@ export interface TrustlessMulticallViewOnlyInterface extends utils.Interface {
   events: {};
 }
 
-export interface TrustlessMulticallViewOnly extends BaseContract {
+export interface TrustlessMulticallRead extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: TrustlessMulticallViewOnlyInterface;
+  interface: TrustlessMulticallReadInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -88,24 +90,14 @@ export interface TrustlessMulticallViewOnly extends BaseContract {
   functions: {
     read(
       calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, TrustlessMulticallRead.ReadResultStructOutput[]] & {
-        blockNumber: BigNumber;
-        results: TrustlessMulticallRead.ReadResultStructOutput[];
-      }
-    >;
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   read(
     calls: TrustlessMulticallRead.ReadCallStruct[],
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, TrustlessMulticallRead.ReadResultStructOutput[]] & {
-      blockNumber: BigNumber;
-      results: TrustlessMulticallRead.ReadResultStructOutput[];
-    }
-  >;
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   callStatic: {
     read(
@@ -124,14 +116,14 @@ export interface TrustlessMulticallViewOnly extends BaseContract {
   estimateGas: {
     read(
       calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     read(
       calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }

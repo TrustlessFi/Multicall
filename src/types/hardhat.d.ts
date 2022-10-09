@@ -17,9 +17,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TrustlessMulticall__factory>;
     getContractFactory(
+      name: "TrustlessMulticallRead",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TrustlessMulticallRead__factory>;
+    getContractFactory(
       name: "TrustlessMulticallViewOnly",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TrustlessMulticallViewOnly__factory>;
+    getContractFactory(
+      name: "TrustlessMulticallWrite",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TrustlessMulticallWrite__factory>;
 
     getContractAt(
       name: "TrustlessMulticall",
@@ -27,10 +35,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.TrustlessMulticall>;
     getContractAt(
+      name: "TrustlessMulticallRead",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TrustlessMulticallRead>;
+    getContractAt(
       name: "TrustlessMulticallViewOnly",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.TrustlessMulticallViewOnly>;
+    getContractAt(
+      name: "TrustlessMulticallWrite",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TrustlessMulticallWrite>;
 
     // default types
     getContractFactory(

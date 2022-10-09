@@ -8,7 +8,6 @@ import type {
   BytesLike,
   CallOverrides,
   ContractTransaction,
-  Overrides,
   PayableOverrides,
   PopulatedTransaction,
   Signer,
@@ -24,28 +23,6 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace TrustlessMulticallRead {
-  export type ReadCallStruct = {
-    target: PromiseOrValue<string>;
-    callData: PromiseOrValue<BytesLike>;
-  };
-
-  export type ReadCallStructOutput = [string, string] & {
-    target: string;
-    callData: string;
-  };
-
-  export type ReadResultStruct = {
-    success: PromiseOrValue<boolean>;
-    returnData: PromiseOrValue<BytesLike>;
-  };
-
-  export type ReadResultStructOutput = [boolean, string] & {
-    success: boolean;
-    returnData: string;
-  };
-}
-
 export declare namespace TrustlessMulticallWrite {
   export type WriteCallStruct = {
     target: PromiseOrValue<string>;
@@ -60,35 +37,29 @@ export declare namespace TrustlessMulticallWrite {
   };
 }
 
-export interface TrustlessMulticallInterface extends utils.Interface {
+export interface TrustlessMulticallWriteInterface extends utils.Interface {
   functions: {
-    "read((address,bytes)[])": FunctionFragment;
     "write((address,bytes,uint256)[],bool)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "read" | "write"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "write"): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "read",
-    values: [TrustlessMulticallRead.ReadCallStruct[]]
-  ): string;
   encodeFunctionData(
     functionFragment: "write",
     values: [TrustlessMulticallWrite.WriteCallStruct[], PromiseOrValue<boolean>]
   ): string;
 
-  decodeFunctionResult(functionFragment: "read", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "write", data: BytesLike): Result;
 
   events: {};
 }
 
-export interface TrustlessMulticall extends BaseContract {
+export interface TrustlessMulticallWrite extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: TrustlessMulticallInterface;
+  interface: TrustlessMulticallWriteInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -110,22 +81,12 @@ export interface TrustlessMulticall extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    read(
-      calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     write(
       calls: TrustlessMulticallWrite.WriteCallStruct[],
       revertOnCallFailure: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
-
-  read(
-    calls: TrustlessMulticallRead.ReadCallStruct[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   write(
     calls: TrustlessMulticallWrite.WriteCallStruct[],
@@ -134,16 +95,6 @@ export interface TrustlessMulticall extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    read(
-      calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, TrustlessMulticallRead.ReadResultStructOutput[]] & {
-        blockNumber: BigNumber;
-        results: TrustlessMulticallRead.ReadResultStructOutput[];
-      }
-    >;
-
     write(
       calls: TrustlessMulticallWrite.WriteCallStruct[],
       revertOnCallFailure: PromiseOrValue<boolean>,
@@ -154,11 +105,6 @@ export interface TrustlessMulticall extends BaseContract {
   filters: {};
 
   estimateGas: {
-    read(
-      calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     write(
       calls: TrustlessMulticallWrite.WriteCallStruct[],
       revertOnCallFailure: PromiseOrValue<boolean>,
@@ -167,11 +113,6 @@ export interface TrustlessMulticall extends BaseContract {
   };
 
   populateTransaction: {
-    read(
-      calls: TrustlessMulticallRead.ReadCallStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     write(
       calls: TrustlessMulticallWrite.WriteCallStruct[],
       revertOnCallFailure: PromiseOrValue<boolean>,
