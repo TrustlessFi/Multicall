@@ -6,4 +6,9 @@ pragma solidity =0.8.17;
 import './TrustlessMulticallRead.sol';
 import './TrustlessMulticallWrite.sol';
 
-contract TrustlessMulticall is TrustlessMulticallRead, TrustlessMulticallWrite {}
+contract TrustlessMulticall is TrustlessMulticallRead, TrustlessMulticallWrite {
+
+    function _callerCanMakeWriteMulticall(address) internal view override returns (bool) {
+        return true;
+    }
+}
