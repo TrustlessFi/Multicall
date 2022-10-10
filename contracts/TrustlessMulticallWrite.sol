@@ -17,9 +17,9 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         WriteCall[] calldata calls,
         bool revertOnCallFailure
     ) external payable nonReentrant returns (
-      bytes[] memory results
+        bytes[] memory results
     ) {
-        require(_callerCanMakeWriteCall(msg.sender), 'Not Authorized.');
+        require(_callerCanMakeWriteMulticall(msg.sender), 'Not Authorized.');
 
         WriteCall memory call;
         results = new bytes[](calls.length);
@@ -47,7 +47,7 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         return results;
     }
 
-    function _callerCanMakeWriteCall(address) internal virtual returns (bool) {
+    function _callerCanMakeWriteMulticall(address) internal virtual returns (bool) {
         return true;
     }
 }
