@@ -47,7 +47,7 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         return results;
     }
 
-    function _callerCanMakeWriteMulticall(address) internal virtual returns (bool) {
+    function _callerCanMakeWriteMulticall(address) internal view virtual returns (bool) {
         return true;
     }
 }
