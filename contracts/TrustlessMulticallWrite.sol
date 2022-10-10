@@ -6,6 +6,7 @@ pragma solidity =0.8.17;
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 abstract contract TrustlessMulticallWrite is ReentrancyGuard {
+
     struct WriteCall { 
         address target; 
         bytes callData; 
@@ -16,8 +17,10 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         WriteCall[] calldata calls,
         bool revertOnCallFailure
     ) external payable nonReentrant returns (
-        bytes[] memory results
+      bytes[] memory results
     ) {
+        require(_callerCanMakeWriteCall(msg.sender), 'Not Authorized.');
+
         WriteCall memory call;
         results = new bytes[](calls.length);
 
@@ -42,5 +45,9 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         }
 
         return results;
+    }
+
+    function _callerCanMakeWriteCall(address) internal virtual returns (bool) {
+        return true;
     }
 }
