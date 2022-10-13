@@ -122,7 +122,7 @@ const executeMulticallsImpl = (tcpMulticall, multicalls) => __awaiter(void 0, vo
                 })}`);
                 const resultsArray = Object.values(abiCoder.decode(call.fragment.outputs, rawResult.returnData));
                 // TODO as needed: support more than one result
-                return [Object.keys(calls)[index], (0, utils_1.first)(resultsArray)];
+                return [Object.keys(calls)[index], resultsArray];
             })));
         }
         catch (error) {
