@@ -220,7 +220,7 @@ const executeMulticallsImpl = async <
           const resultsArray = Object.values(abiCoder.decode(call.fragment.outputs!, rawResult.returnData))
 
           // TODO as needed: support more than one result
-          return [Object.keys(calls)[index], first(resultsArray)]
+          return [Object.keys(calls)[index], resultsArray]
         }))
       )
     } catch (error) {
@@ -243,9 +243,11 @@ const executeMulticallsImpl = async <
   )) as {
     [Multicall in keyof Multicalls]: {
       [FunctionID in keyof Multicalls[Multicall]]:
+        PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
+        /*
         PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>> extends Array<unknown>
         ? PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>[0]
-        : PromiseType<ReturnType<Multicalls[Multicall][FunctionID]['func']>>
+        */
     }
   }
 }
