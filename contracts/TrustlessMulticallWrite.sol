@@ -3,8 +3,13 @@
 
 pragma solidity =0.8.17;
 
+
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
+/**
+  * @title TrustlessMulicallRead
+  * @notice Allows the caller to bundle many chain write calls into a single atomic call.
+  */ 
 abstract contract TrustlessMulticallWrite is ReentrancyGuard {
 
     struct WriteCall { 
@@ -13,6 +18,23 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         uint256 value;
     } 
 
+    /**
+      * @notice Whether or not the caller is allowed to execute a write multicall. 
+      *   must be overriden by the extending contract, else this contract cannot make 
+      *   write multicalls
+      * @return Whether or not the called is authorized to have this contract execute 
+      *   a write multicall.
+      */ 
+    function _callerCanMakeWriteMulticall(address) internal view virtual returns (bool) {
+        return false;
+    }
+
+    /**
+      * @notice Executes a write multicall.
+      * @param calls The structured calls, including eth value to send
+      * @param revertOnCallFailure Whether or not to revert the entire transaction if any underlying call fails.
+      * @return results The results of each call
+      */ 
     function write(
         WriteCall[] calldata calls,
         bool revertOnCallFailure
@@ -24,9 +46,12 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         WriteCall memory call;
         results = new bytes[](calls.length);
 
+        bool success;
+        bytes memory result;
+
         for(uint256 i = 0; i < calls.length; i++) {
             call = calls[i];
-            (bool success, bytes memory result) = 
+            (success, result) = 
                 call.value > 0
                     ? payable(call.target).call{value: call.value}(call.callData)
                     : call.target.call(call.callData);
@@ -37,7 +62,7 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
                 assembly {
                     result := add(result, 0x04)
                 }
-                // All that remains is the revert string
+                // All that remains is the revert string. Revert with that message.
                 revert(abi.decode(result, (string))); 
             }
 
@@ -45,9 +70,5 @@ abstract contract TrustlessMulticallWrite is ReentrancyGuard {
         }
 
         return results;
-    }
-
-    function _callerCanMakeWriteMulticall(address) internal view virtual returns (bool) {
-        return false;
     }
 }

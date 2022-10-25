@@ -3,7 +3,11 @@
 
 pragma solidity =0.8.17;
 
-abstract contract TrustlessMulticallRead {
+/**
+  * @title TrustlessMulicallRead
+  * @notice Allows the caller to bundle many chain reads into a single call.
+  */ 
+contract TrustlessMulticallRead {
     struct ReadCall { 
         address target; 
         bytes callData; 
@@ -14,6 +18,13 @@ abstract contract TrustlessMulticallRead {
         bytes returnData; 
     }
 
+    /**
+      * @notice Executes a read multicall.
+      * @param calls The structured calls to make.
+      * @return blockNumber The current block number used to allow the caller to determine
+      *   the recency of the data returned.
+      * @return results The return data from the calls, along with whether each call was successful or not.
+      */ 
     function read(ReadCall[] calldata calls) external returns (
         uint256 blockNumber,
         ReadResult[] memory results

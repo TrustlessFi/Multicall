@@ -3,14 +3,17 @@
 
 pragma solidity =0.8.17;
 
-import './TrustlessMulticall.sol';
+import './TrustlessMulticallRead.sol';
 
-
+/**
+  * @title TrustlessMulticallViewOnly
+  * @notice Used in typescript to signal to Ethers that the user is making a view only call.
+  */ 
 contract TrustlessMulticallViewOnly {
     function read(
-        TrustlessMulticall.ReadCall[] calldata calls
+        TrustlessMulticallRead.ReadCall[] calldata calls
     ) external view virtual returns (
         uint256 blockNumber,
-        TrustlessMulticall.ReadResult[] memory results
+        TrustlessMulticallRead.ReadResult[] memory results
     ) {}
 }
