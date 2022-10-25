@@ -6,6 +6,7 @@
   "author": "TrustlessOfficial <TrustlessFi@protonmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.6",
     "@nomiclabs/hardhat-ethers": "^2.2.0",
     "@openzeppelin/contracts": "^4.7.3",
     "@typechain/ethers-v5": "^10.1.0",
