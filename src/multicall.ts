@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: UNLICENSED
 
 import { BaseContract, ContractFunction, utils as ethersUtils, BigNumber, BigNumberish, Contract } from 'ethers';
-import { enforce, first, zeroAddress, PromiseType } from '@trustlessfi/utils'
+import { enforce, first, zeroAddress, PromiseType } from './utils'
 import { TrustlessMulticallViewOnly, TrustlessMulticall } from './types'
 import { FunctionFragment } from 'ethers/lib/utils'
 

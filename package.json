@@ -8,7 +8,6 @@
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.0",
     "@openzeppelin/contracts": "^4.7.3",
-    "@trustlessfi/utils": "^0.2.9",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.3",
     "ethers": "^5.7.1",

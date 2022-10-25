@@ -899,7 +899,6 @@ __metadata:
   dependencies:
     "@nomiclabs/hardhat-ethers": ^2.2.0
     "@openzeppelin/contracts": ^4.7.3
-    "@trustlessfi/utils": ^0.2.9
     "@typechain/ethers-v5": ^10.1.0
     "@typechain/hardhat": ^6.1.3
     ethers: ^5.7.1
@@ -911,15 +910,6 @@ __metadata:
     typescript: ^4.8.4
   languageName: unknown
   linkType: soft
-
-"@trustlessfi/utils@npm:^0.2.9":
-  version: 0.2.9
-  resolution: "@trustlessfi/utils@npm:0.2.9"
-  dependencies:
-    ethers: ^5.4.7
-  checksum: 1e1fd6408b28c41d9d29f826e2418307f6d08a47380a77a1bc61554893115fb427e7759c47d5921dbcfccab9ed2c646a59c0028ff85ea5052230d1e4f9f2e44c
-  languageName: node
-  linkType: hard
 
 "@tsconfig/node10@npm:^1.0.7":
   version: 1.0.9
@@ -1968,7 +1958,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.4.7, ethers@npm:^5.7.1":
+"ethers@npm:^5.7.1":
   version: 5.7.1
   resolution: "ethers@npm:5.7.1"
   dependencies:
