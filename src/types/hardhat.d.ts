@@ -13,6 +13,10 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "SimpleViewContract",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleViewContract__factory>;
+    getContractFactory(
       name: "TrustlessMulticall",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TrustlessMulticall__factory>;
@@ -29,6 +33,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TrustlessMulticallWrite__factory>;
 
+    getContractAt(
+      name: "SimpleViewContract",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleViewContract>;
     getContractAt(
       name: "TrustlessMulticall",
       address: string,

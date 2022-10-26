@@ -1,6 +1,8 @@
 import '@typechain/hardhat'
+import '@nomiclabs/hardhat-waffle'
 import { HardhatUserConfig, HardhatNetworkAccountUserConfig } from "hardhat/types"
 import '@nomiclabs/hardhat-ethers'
+import 'hardhat-deploy'
 
 
 
