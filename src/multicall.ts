@@ -84,7 +84,7 @@ export const manyContractOneFunctionMC = <
   specificContract extends BaseContract,
   funcName extends keyof specificContract["functions"],
   specificFunction extends specificContract["functions"][funcName],
-  Args extends {[key in string]: argsOrArgsAndValue<Parameters<specificFunction>>},
+  Args extends {[specificContractAddress in string]: argsOrArgsAndValue<Parameters<specificFunction>>},
 > (
   contract: specificContract,
   funcName: funcName,
