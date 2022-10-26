@@ -26,6 +26,7 @@ import type {
 export interface SimpleViewContractInterface extends utils.Interface {
   functions: {
     "bothValues()": FunctionFragment;
+    "double(uint256)": FunctionFragment;
     "firstValue()": FunctionFragment;
     "secondValue()": FunctionFragment;
     "setFirstValue(uint256)": FunctionFragment;
@@ -35,6 +36,7 @@ export interface SimpleViewContractInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "bothValues"
+      | "double"
       | "firstValue"
       | "secondValue"
       | "setFirstValue"
@@ -44,6 +46,10 @@ export interface SimpleViewContractInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "bothValues",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "double",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "firstValue",
@@ -63,6 +69,7 @@ export interface SimpleViewContractInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "bothValues", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "double", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "firstValue", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "secondValue",
@@ -113,6 +120,11 @@ export interface SimpleViewContract extends BaseContract {
       [BigNumber, BigNumber] & { first: BigNumber; second: BigNumber }
     >;
 
+    double(
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { returnValue: BigNumber }>;
+
     firstValue(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     secondValue(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -131,6 +143,11 @@ export interface SimpleViewContract extends BaseContract {
   bothValues(
     overrides?: CallOverrides
   ): Promise<[BigNumber, BigNumber] & { first: BigNumber; second: BigNumber }>;
+
+  double(
+    value: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   firstValue(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -153,6 +170,11 @@ export interface SimpleViewContract extends BaseContract {
       [BigNumber, BigNumber] & { first: BigNumber; second: BigNumber }
     >;
 
+    double(
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     firstValue(overrides?: CallOverrides): Promise<BigNumber>;
 
     secondValue(overrides?: CallOverrides): Promise<BigNumber>;
@@ -173,6 +195,11 @@ export interface SimpleViewContract extends BaseContract {
   estimateGas: {
     bothValues(overrides?: CallOverrides): Promise<BigNumber>;
 
+    double(
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     firstValue(overrides?: CallOverrides): Promise<BigNumber>;
 
     secondValue(overrides?: CallOverrides): Promise<BigNumber>;
@@ -190,6 +217,11 @@ export interface SimpleViewContract extends BaseContract {
 
   populateTransaction: {
     bothValues(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    double(
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     firstValue(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

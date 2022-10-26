@@ -15,7 +15,11 @@ contract SimpleViewContract{
         firstValue = _secondValue;
     }
 
-    function bothValues() external view returns (uint first, uint second){
+    function double(uint value) external pure returns (uint returnValue) {
+        returnValue = value * 2;
+    }
+
+    function bothValues() external view returns (uint first, uint second) {
         first = firstValue;
         second = secondValue;
     }

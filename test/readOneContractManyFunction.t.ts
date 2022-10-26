@@ -1,6 +1,6 @@
 import hre from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { TrustlessMulticallViewOnly, SimpleViewContract, TrustlessMulticallRead, } from "../src/types/"
+import { TrustlessMulticallViewOnly, SimpleViewContract, TrustlessMulticallRead, } from "../src/types"
 
 const e = hre.ethers
 import { Contract } from 'ethers'
@@ -42,14 +42,14 @@ const deployMulticallReadContracts = async (): Promise<multicallReadContracts> =
 }
 
 
-describe('MulticallRead', () => {
+describe('readOneContractManyFunction', () => {
   let contracts: multicallReadContracts
 
   beforeEach(async () => {
     contracts = await deployMulticallReadContracts()
   })
 
-  it("Can grab multiple values at once", async () => {
+  it("Can grab multiple values from the same contract at once", async () => {
     const firstValue0 = await contracts.simpleViewContract.firstValue()
     const secondValue0 = await contracts.simpleViewContract.secondValue()
 
@@ -73,7 +73,7 @@ describe('MulticallRead', () => {
     expectEqual(secondValue0, simpleContractValues.secondValue)
   })
 
-  it("Can handle multiple return values", async () => {
+  it("Can handle multiple return values for a function", async () => {
     const firstValue0 = await contracts.simpleViewContract.firstValue()
     const secondValue0 = await contracts.simpleViewContract.secondValue()
 
