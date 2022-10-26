@@ -42,7 +42,7 @@ const deployMulticallReadContracts = async (): Promise<multicallReadContracts> =
 }
 
 
-describe('readOneContractManyFunction', () => {
+describe('readOneContractOneFunction', () => {
   let contracts: multicallReadContracts
 
   beforeEach(async () => {
