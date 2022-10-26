@@ -64,8 +64,8 @@ describe('readOneContractOneFunction', () => {
       }
     )
 
-    expectEqual(simpleContractDoubleValues['one'], 2)
-    expectEqual(simpleContractDoubleValues['two'], 4)
+    expectEqual(simpleContractDoubleValues.one, 2)
+    expectEqual(simpleContractDoubleValues.two, 4)
   })
 
 })
