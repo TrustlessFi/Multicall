@@ -50,7 +50,7 @@ describe('readOneContractOneFunction', () => {
   })
 
   it("Can call same view function on multiple identical contracts", async () => {
-    const { simpleContractIdentityValues } = await executeMulticalls(
+    const { simpleContractIdentityValues: simpleContractDoubleValues } = await executeMulticalls(
       contracts.readMulticall, 
       { 
         simpleContractIdentityValues: oneContractOneFunctionMC(
@@ -64,8 +64,8 @@ describe('readOneContractOneFunction', () => {
       }
     )
 
-    expectEqual(simpleContractIdentityValues['one'], 2)
-    expectEqual(simpleContractIdentityValues['two'], 4)
+    expectEqual(simpleContractDoubleValues['one'], 2)
+    expectEqual(simpleContractDoubleValues['two'], 4)
   })
 
 })
