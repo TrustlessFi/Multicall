@@ -50,10 +50,10 @@ describe('readOneContractOneFunction', () => {
   })
 
   it("Can call same view function on multiple identical contracts", async () => {
-    const { simpleContractIdentityValues: simpleContractDoubleValues } = await executeMulticalls(
+    const { simpleContractDoubleValues } = await executeMulticalls(
       contracts.readMulticall, 
       { 
-        simpleContractIdentityValues: oneContractOneFunctionMC(
+        simpleContractDoubleValues: oneContractOneFunctionMC(
           contracts.simpleViewContract,
           'double',
           {
